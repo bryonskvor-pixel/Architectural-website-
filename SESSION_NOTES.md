@@ -1,5 +1,34 @@
 # Session Notes
 
+## 2026-07-08 — Session 4: All product content authored + full agent roster live
+
+**Accomplished — the four remaining product lines are authored from real D1 data and every agent is enabled.**
+- **Authored [modernfold](lib/content/modernfold.ts), [euro-wall](lib/content/euro-wall.ts), [smoke-guard](lib/content/smoke-guard.ts), [airolite](lib/content/airolite.ts)** as full `LineContent`, pulled from the pm-intelligence-agent D1 param store (`18812c7c…`) exactly as Skyfold was — brand-scoped `parameters` **and** the `required_conditions` table (the richest source for the GC-readiness modules). Every fact carries a `source` matching the D1 `source_doc`. Registered all four in [lib/content/index.ts](lib/content/index.ts).
+- **Generic models-table mode** ([components/ProductSections.tsx](components/ProductSections.tsx) + [types.ts](lib/content/types.ts)): Skyfold's `ModelsTable` hard-codes System-STC/Panel-STC columns — right for the acoustic lines but dead "—" columns for the other three. Added an **additive** branch: when `models.columns` is set, rows render free-form `cells` under custom headers. Skyfold + Modernfold keep the acoustic layout untouched; Euro-Wall/Smoke Guard/Airolite get fit-for-purpose columns (approvals/sizes/DP; application/opening/power/fail-safe; free-area/water-rating). This is an extension, not a redesign of the Skyfold reference.
+- **Sell-vs-install held structurally**: Airolite has **no `gcReadiness`** (suppressed by `isSellOnly`, gated on the flag — never by name), a supply-only overview, and the "Request louver quote / takeoff" CTA. Verified on the rendered page that the "What the GC must provide" module is **absent** and the supply-only framing is present.
+- **Enabled all five agents** — [PILOT_BRANDS](lib/agents/pilot.ts) now = every line. Live end-to-end tests (prod `next start`, real Cloudflare + Claude):
+  - Modernfold: STC ceiling question → 5 citations, $0.0054.
+  - Euro-Wall: HVHZ/FL# question → correct **FL17838** + volunteered the Channel-Sill-not-impact-rated nuance, $0.0053.
+  - Airolite: "not water-rated?" + "can you install it?" → correct spec **and** the supply-only redirect ("[COMPANY] supplies… installed by your own contractor"), $0.0057.
+  - All three events logged to the agent D1 (`e0188046…`, `agent_events`) with tokens/cost, `refused=0`, `escalated=0`. (Smoke Guard already validated in Session 3.)
+- **Reconciled the Skyfold support-steel nuance**: the D1 `required_conditions` (#1) confirm the overhead steel is engineered/furnished **by others** to Skyfold's load/deflection criteria — the page's "supplied by others" is correct; the Session-3 agent claim (Skyfold supplies/designs it) was the error. Fixed with a per-brand `brandNotes` addendum in [config.ts](lib/agents/config.ts) so the agent now agrees with the page.
+
+**Validation:** `npm run typecheck` clean; `npm run build` green (all 5 product pages prerendered); all four new pages serve HTTP 200 with authored content.
+
+**Known nuances / gotchas for a fresh agent:**
+- **Windows build is memory-fragile.** `next build` spawns a worker that dies with `VirtualAlloc failed` / exit `3221226505` when the machine is out of commit charge (this box is 7.6 GB RAM). It is **not** a code bug — clean HEAD reproduces it. Free memory first; build succeeds with `NODE_OPTIONS=--max-old-space-size=2048`. Also: `npm` via the PowerShell wrapper throws "Could not determine Node.js install directory" — call `& "C:\Program Files\nodejs\npm.cmd"` directly instead.
+- Content prose uses the literal `[COMPANY]` placeholder (same as the Skyfold reference); it is **not** wired to `activeBrand.name`. When the real name is chosen, update `brand.ts` **and** grep the content files for `[COMPANY]`.
+- Prompt caching still reads 0 cached tokens (Haiku min prefix > brand prompt) — unchanged from Session 3, still harmless.
+- Turnstile still unprovisioned (bot gate off in dev); Anthropic key still the borrowed one — both are Session 5 launch-hardening items.
+
+**Proposed Session 5 — launch hardening (as you flagged):**
+1. Provision **Cloudflare Turnstile** (site + secret keys), set the env vars, and confirm the first-message gate actually engages (the `turnstile-spin` skill can do this end-to-end).
+2. Swap in a **dedicated Anthropic project key** (retire the borrowed one) and a dedicated Cloudflare token scoped to D1:Edit + Vectorize:Edit + Workers AI:Read.
+3. Wire **`/api/rfq`** intake (currently 501) + the agent's **human-escalation pre-fill** — carry the session's question/brand into the Request-a-Quote form.
+4. Optional: cache the shared spec context to make prompt caching engage, and add a lightweight `agent_events` spend dashboard/query.
+
+---
+
 ## 2026-07-08 — Session 3: Agent data tier wired (pilot: Skyfold + Smoke Guard)
 
 **Accomplished — the catalog agents are live end-to-end and validated against the real Cloudflare + Claude services.**
