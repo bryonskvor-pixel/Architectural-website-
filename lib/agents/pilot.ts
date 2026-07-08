@@ -5,10 +5,17 @@ import type { BrandSlug } from "@/lib/products";
  * the client can check "is this agent live?" without importing the Claude
  * client (which must never reach the browser bundle). config.ts imports this.
  *
- * Plan RECOMMENDATIONS: launch Skyfold + Smoke Guard first, then expand once
- * cost + cited-answer rate are validated.
+ * Plan RECOMMENDATIONS: launched Skyfold + Smoke Guard first (Session 3); Session
+ * 4 expands to the full roster once each brand's page content is authored and
+ * its cost + cited-answer quality are validated by a live test.
  */
-export const PILOT_BRANDS: readonly BrandSlug[] = ["skyfold", "smoke-guard"];
+export const PILOT_BRANDS: readonly BrandSlug[] = [
+  "skyfold",
+  "smoke-guard",
+  "modernfold",
+  "euro-wall",
+  "airolite",
+];
 
 export function isAgentEnabled(slug: BrandSlug): boolean {
   return PILOT_BRANDS.includes(slug);

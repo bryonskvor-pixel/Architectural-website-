@@ -16,10 +16,15 @@ export type Sourced = {
   source?: string;
 };
 
-/** One row of the models/series comparison table. */
+/** One row of the models/series comparison table.
+ *
+ * Acoustic lines (Skyfold, Modernfold) use the typed STC/weight/height fields
+ * with the default six-column layout. Non-acoustic lines (Euro-Wall, Smoke
+ * Guard, Airolite) instead set `models.columns` and supply free-form `cells`
+ * — the same table treatment, columns fit to the line's real data. */
 export type ModelRow = {
-  series: string;
-  model: string;
+  series?: string;
+  model?: string;
   /** Installed system STC (what the specifier designs to). */
   systemStc?: string;
   /** Lab panel STC (higher; the panel alone). */
@@ -27,6 +32,8 @@ export type ModelRow = {
   weight?: string;
   maxHeight?: string;
   note?: string;
+  /** Free-form cells, one per `models.columns` header (non-acoustic lines). */
+  cells?: string[];
 };
 
 export type SpecGroup = {
@@ -57,6 +64,10 @@ export type LineContent = {
   /** Models/series comparison. */
   models: {
     caption: string;
+    /** Custom header row for non-acoustic lines. When set, rows render their
+     * `cells` under these headers instead of the default acoustic layout
+     * (Series / Model / System STC / Panel STC / Weight / Max height). */
+    columns?: string[];
     rows: ModelRow[];
   };
   /** Grouped technical data tables (acoustic/structural/electrical/…). */

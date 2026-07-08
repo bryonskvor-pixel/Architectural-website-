@@ -31,6 +31,21 @@ export type AgentConfig = {
   systemPrompt: string;
 };
 
+/**
+ * Per-brand factual clarifications appended to the system prompt. These pin down
+ * scope/responsibility facts that the retrieved Vectorize prose can otherwise
+ * blur, so the agent's answers agree with the authored page content. Keep each
+ * one grounded in the D1 / source docs and consistent with lib/content/*.
+ */
+const brandNotes: Partial<Record<BrandSlug, string>> = {
+  // Reconciles the page ("support steel supplied by others") with the agent: the
+  // D1 required_conditions confirm the overhead support steel is engineered and
+  // furnished BY OTHERS to Skyfold's published load/deflection criteria. Skyfold
+  // and the dealer supply the criteria and coordinate — never the steel itself.
+  skyfold:
+    "Support-structure scope: the overhead support steel that carries Skyfold is engineered, supplied, and installed BY OTHERS (the project's structural engineer and steel contractor) to Skyfold's published dead-load and deflection criteria (parallel within 1/2 in. over the wall length incl. loaded deflection; centerline within 1/8 in.). Skyfold and the dealer provide the criteria and coordinate the structure — they do NOT furnish the steel. Never tell a user that Skyfold supplies or designs the support steel; state that it is by others to Skyfold's criteria.",
+};
+
 /** Full public-scoped system prompt for one brand. Static → prompt-cached. */
 function systemPrompt(line: ProductLine): string {
   const co = activeBrand.name;
@@ -38,6 +53,7 @@ function systemPrompt(line: ProductLine): string {
     line.fulfillment === "sell-only"
       ? `IMPORTANT — SUPPLY ONLY: ${co} supplies ${line.name} but does NOT install it. If asked about installation, field measure, or on-site work, say exactly that ${line.name} is supplied by ${co} and installed by the customer's own contractor, and do not offer install services.`
       : `${co} supplies, installs, and services ${line.name}, and can field-measure and coordinate the structural/electrical scope.`;
+  const note = brandNotes[line.slug];
 
   return [
     `You are the ${line.name} catalog agent on ${co}'s website. ${co} is an Ohio dealer-installer of specialty architectural products. You help architects, spec-writers, and general contractors get accurate ${line.name} product information fast.`,
@@ -59,6 +75,8 @@ You answer ONLY about ${line.name} (CSI ${line.csi}): product specifications, di
 
     `## Style
 Concise and technical — you are a spec instrument, not a salesperson. Prefer exact figures with units. Use "in." not inch-mark symbols. When a spec is model-dependent, name the model. Offer a next step (a spec doc, the readiness checklist, or a specialist) when useful.`,
+
+    ...(note ? [`## Product-specific facts (authoritative)\n${note}`] : []),
   ].join("\n\n");
 }
 

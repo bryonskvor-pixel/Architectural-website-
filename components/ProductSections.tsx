@@ -39,6 +39,48 @@ export function Applications({ items }: { items: string[] }) {
 }
 
 export function ModelsTable({ models }: { models: LineContent["models"] }) {
+  // Non-acoustic lines supply their own column headers + free-form cells; the
+  // treatment (hairline table, mono values, caption) is identical.
+  if (models.columns) {
+    const cols = models.columns;
+    return (
+      <div>
+        <div className="overflow-x-auto border border-hairline">
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="border-b border-hairline bg-surface">
+                {cols.map((h) => (
+                  <th key={h} className="px-3 py-2.5 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {models.rows.map((r: ModelRow, i) => (
+                <tr key={i} className="border-b border-hairline last:border-b-0">
+                  {cols.map((_, j) => (
+                    <td
+                      key={j}
+                      className={
+                        j === 0
+                          ? "px-3 py-2.5 text-sm text-ink-muted"
+                          : "px-3 py-2.5 font-mono text-sm text-ink"
+                      }
+                    >
+                      {r.cells?.[j] ?? "—"}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm text-ink-muted">{models.caption}</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="overflow-x-auto border border-hairline">
