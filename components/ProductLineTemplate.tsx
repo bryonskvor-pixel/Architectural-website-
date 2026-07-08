@@ -1,65 +1,84 @@
 import Link from "next/link";
 import type { ProductLine } from "@/lib/products";
 import { isSellOnly } from "@/lib/products";
+import { getLineContent } from "@/lib/content";
 import { SectionCutHeader } from "@/components/SectionCutHeader";
-import { SpecBand } from "@/components/SpecBand";
 import { AgentPanel } from "@/components/AgentPanel";
+import {
+  Applications,
+  ModelsTable,
+  TechnicalData,
+  GcReadinessModule,
+  ResourceList,
+} from "@/components/ProductSections";
 
 /**
  * Shared spec-forward product-line template (plan Part 3):
- *   hero → at-a-glance spec band → applications → models/series →
- *   technical data → resources → embedded agent → process cross-link → CTA.
+ *   hero → at-a-glance spec ticker → applications → models/series →
+ *   technical data → GC readiness → finishes → resources → embedded agent →
+ *   process cross-link → CTA.
  *
- * Content is PLACEHOLDER for the scaffold. The sell-vs-install distinction is
- * enforced structurally: sell-only lines (Airolite) suppress the install /
- * field-measure process cross-link and route CTAs to "request takeoff" rather
- * than "schedule field measure" (plan Part 2.1).
+ * A line with authored content (getLineContent) renders the full treatment;
+ * otherwise it renders the placeholder scaffold. Skyfold is the Session 2
+ * reference. The sell-vs-install distinction is enforced structurally: sell-only
+ * lines suppress the GC-readiness module and the install/field-measure
+ * cross-link, and route CTAs to "request takeoff" (plan Part 2.1).
  */
 export function ProductLineTemplate({ line }: { line: ProductLine }) {
   const sellOnly = isSellOnly(line);
+  const content = getLineContent(line.slug);
+  // Operable systems echo their real motion in the hero (plan Part 5.2).
+  const motion = line.category === "space-flexibility" ? "retract" : "none";
 
   return (
     <article>
-      <SectionCutHeader line={line} />
+      <SectionCutHeader line={line} motion={motion} />
 
       <div className="mx-auto max-w-6xl px-6">
-        <Section id="at-a-glance" title="At a glance">
-          <SpecBand facts={line.ataGlance} />
-        </Section>
-
         <div className="grid gap-16 lg:grid-cols-[1fr_380px]">
           <div>
-            <Section id="applications" title="Applications">
-              <Placeholder>
-                Where {line.name} fits — building types, typical conditions, and
-                when to choose it over the alternatives. Content lands in the
-                per-line content session.
-              </Placeholder>
-            </Section>
+            {content ? (
+              <>
+                <Section id="overview" title="Overview" first>
+                  <p className="max-w-2xl text-lg leading-relaxed text-ink">
+                    {content.overview}
+                  </p>
+                </Section>
 
-            <Section id="models" title="Models & series">
-              <Placeholder>
-                {line.name} series/models with the spec facts that differentiate
-                them. Numbers will be served authoritatively from the D1
-                parameter store (see /lib/retrieval.ts).
-              </Placeholder>
-            </Section>
+                <Section id="applications" title="Applications">
+                  <Applications items={content.applications} />
+                </Section>
 
-            <Section id="technical-data" title="Technical data">
-              <Placeholder>
-                Acoustic / fire / structural / electrical data — the tables an
-                architect specifies from. Confirm CSI {line.csi} and every rating
-                against the manufacturer's current 3-part spec at build.
-              </Placeholder>
-            </Section>
+                <Section id="models" title="Models & series">
+                  <ModelsTable models={content.models} />
+                </Section>
 
-            <Section id="resources" title="Resources">
-              <Placeholder>
-                Link (don&apos;t mirror) manufacturer CAD/BIM/CSI specs; host only
-                the dealer value-add — lead-time notes, regional project photos,
-                and the &quot;what the GC must provide&quot; checklist.
-              </Placeholder>
-            </Section>
+                <Section id="technical-data" title="Technical data">
+                  <TechnicalData groups={content.technical} />
+                </Section>
+
+                {/* GC readiness — install lines only (plan Part 2.1). */}
+                {!sellOnly && content.gcReadiness && (
+                  <Section id="gc-readiness" title="GC coordination">
+                    <GcReadinessModule data={content.gcReadiness} />
+                  </Section>
+                )}
+
+                {content.finishes && (
+                  <Section id="finishes" title="Finishes">
+                    <p className="max-w-2xl text-lg leading-relaxed text-ink">
+                      {content.finishes}
+                    </p>
+                  </Section>
+                )}
+
+                <Section id="resources" title="Resources">
+                  <ResourceList items={content.resources} />
+                </Section>
+              </>
+            ) : (
+              <PlaceholderSections line={line} />
+            )}
           </div>
 
           {/* Docked agent rail (right-rail desktop; stacks on mobile). */}
@@ -79,10 +98,7 @@ export function ProductLineTemplate({ line }: { line: ProductLine }) {
                 furnish the product; your contractor installs. Ask us for a
                 takeoff and current lead times.
               </p>
-              <CtaRow
-                primaryHref="/contact/request-quote"
-                primaryLabel="Request louver quote / takeoff"
-              />
+              <CtaRow primaryHref="/contact/request-quote" primaryLabel="Request louver quote / takeoff" />
             </div>
           ) : (
             <div className="border border-hairline bg-surface p-6">
@@ -108,17 +124,50 @@ export function ProductLineTemplate({ line }: { line: ProductLine }) {
   );
 }
 
+function PlaceholderSections({ line }: { line: ProductLine }) {
+  return (
+    <>
+      <Section id="applications" title="Applications" first>
+        <Placeholder>
+          Where {line.name} fits — building types, typical conditions, and when
+          to choose it. Authored content lands in a later session from the
+          ingested {line.name} data.
+        </Placeholder>
+      </Section>
+      <Section id="models" title="Models & series">
+        <Placeholder>
+          {line.name} series with the spec facts that differentiate them, served
+          authoritatively from the D1 parameter store.
+        </Placeholder>
+      </Section>
+      <Section id="technical-data" title="Technical data">
+        <Placeholder>
+          Acoustic / fire / structural / electrical data. Confirm CSI {line.csi}
+          {" "}and every rating against the manufacturer&apos;s current 3-part spec.
+        </Placeholder>
+      </Section>
+      <Section id="resources" title="Resources">
+        <Placeholder>
+          Link manufacturer CAD/BIM/CSI specs; host only the dealer value-add.
+        </Placeholder>
+      </Section>
+    </>
+  );
+}
+
 function Section({
   id,
   title,
   children,
+  first = false,
 }: {
   id: string;
   title: string;
   children: React.ReactNode;
+  first?: boolean;
 }) {
   return (
-    <section id={id} className="border-t border-hairline py-16 first:border-t-0">
+    <section id={id} className={`py-16 ${first ? "" : "border-t border-hairline"}`}>
       <h2 className="mb-6 font-mono text-xs uppercase tracking-wide text-ink-muted">
         {title}
       </h2>

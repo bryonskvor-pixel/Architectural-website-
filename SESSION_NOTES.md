@@ -1,5 +1,30 @@
 # Session Notes
 
+## 2026-07-07 — Session 2: Skyfold reference page
+
+**Accomplished:**
+- Built the **Skyfold product-line page as the visual + content reference implementation** — the contract the other four pages will copy. Build green, typecheck clean, page renders 200 with real data.
+- **Pulled authoritative Skyfold spec data from the D1 param store** (via the Cloudflare MCP `d1_database_query`, db `18812c7c…`, 213 rows read) rather than inventing numbers. Content in [lib/content/skyfold.ts](lib/content/skyfold.ts); every fact carries a `source` string matching the D1 `source_doc`, so page citations and agent citations agree.
+- **Rich content model** ([lib/content/types.ts](lib/content/types.ts)) + registry ([lib/content/index.ts](lib/content/index.ts)): a line with an entry renders the full spec-forward template; lines without one keep the placeholder scaffold. Only Skyfold is authored so far.
+- **Rich-section components** ([components/ProductSections.tsx](components/ProductSections.tsx)): ModelsTable (system-STC vs panel-STC nuance made explicit), TechnicalData (grouped, each fact with a drawing-tag citation via `SourceTag`), GcReadinessModule ("What the GC must provide" checklist — the uniquely-dealer value-add), ResourceList (Manufacturer/Dealer badge enforcing link-vs-host).
+- **Hero upgraded** ([components/SectionCutHeader.tsx](components/SectionCutHeader.tsx), now a client component): section-cut framing, a monospace spec ticker, and a scroll-driven "retract" motion (panels rise into the ceiling line) — transform/opacity only, fully disabled under `prefers-reduced-motion`. Enabled for `space-flexibility` lines.
+- Template ([components/ProductLineTemplate.tsx](components/ProductLineTemplate.tsx)) now branches on authored content and still enforces sell-vs-install (GC module + field-measure CTA suppressed for sell-only).
+
+**State:**
+- Skyfold page is the reference: overview → applications → models table → technical data (4 groups, all cited) → GC coordination → finishes → resources → docked agent → process cross-link → CTA.
+- Other 4 product pages still render the placeholder scaffold (correct — they're authored later from their D1 data using the same `LineContent` shape).
+- Agents still not wired (handler 501) — unchanged from Session 1.
+
+**Next steps — Session 3 options (recommend the agent data tier now):**
+- **Wire the agent data tier** (recommended): implement [lib/retrieval.ts](lib/retrieval.ts) + [lib/claude.ts](lib/claude.ts) + [lib/agents/guardrails.ts](lib/agents/guardrails.ts) against the live Cloudflare indexes, make [app/api/agent/[brand]/route.ts](app/api/agent/[brand]/route.ts) stream real Haiku answers with citation chips + Turnstile, and pilot on **Skyfold + Smoke Guard** per plan RECOMMENDATIONS. Skyfold now has a finished page for the agent to live in.
+- **Or** author the other 4 product pages' content (repeat the Skyfold D1-pull → LineContent process for Modernfold, Euro-Wall, Smoke Guard, Airolite).
+
+**Context:**
+- Content numbers are sourced from D1; re-pull if the param store changes. Skyfold db id `18812c7c-0661-4e87-beaa-926b18f13a67`, `brand = 'Skyfold'`.
+- The system-STC vs panel-STC distinction is intentional and important — specifiers design to system STC; keep both columns for every acoustic line.
+
+---
+
 ## 2026-07-07 — Session 1: Scaffold + contracts
 
 **Accomplished:**
