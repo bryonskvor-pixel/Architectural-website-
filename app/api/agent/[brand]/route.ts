@@ -1,27 +1,58 @@
-import { NextResponse } from "next/server";
 import { getAgentConfig } from "@/lib/agents/config";
-import { checkGuardrails } from "@/lib/agents/guardrails";
-import { retrieveForBrand } from "@/lib/retrieval";
-// import { runAgentTurn } from "@/lib/claude"; // wired in the agent session
+import { checkGuardrails, recordSpend, LIMITS } from "@/lib/agents/guardrails";
+import { retrieveForBrand, type RetrievalResult } from "@/lib/retrieval";
+import { streamAgentTurn, type AgentSource, type AgentMessage } from "@/lib/claude";
 
 /**
- * SHARED CATALOG-AGENT HANDLER — one endpoint for all five brands, selected by
- * the [brand] route param (plan Part 4.5). Per-brand behavior comes entirely
- * from getAgentConfig(brand): system prompt, Vectorize index, D1 scope, model
- * tier, and the sell-only flag.
+ * SHARED CATALOG-AGENT HANDLER — one endpoint for all brands, selected by the
+ * [brand] route param (plan Part 4.5). Per-brand behavior comes from
+ * getAgentConfig(brand). Only pilot-enabled brands answer (Skyfold + Smoke
+ * Guard first).
  *
- * Flow (SCAFFOLD — the model call is intentionally not wired yet):
- *   1. resolve per-brand config (404 unknown brand)
- *   2. guardrails: Turnstile + rate limit + session cap + daily-spend breaker
- *   3. retrieve authoritative D1 params + brand Vectorize chunks
- *   4. runAgentTurn (Haiku + prompt caching), stream, attach citations
- *   5. record spend to D1
+ * Flow: resolve config → guardrails (Turnstile + rate/session/spend) → retrieve
+ * authoritative D1 params + brand Vectorize chunks → build numbered sources →
+ * stream a Haiku answer (system prompt cached) as SSE → record spend to D1.
  *
- * Runs on the Node.js runtime (Cloudflare REST + Anthropic SDK from Vercel).
+ * Node.js runtime (Cloudflare REST + Anthropic SDK from Vercel).
  */
 export const runtime = "nodejs";
+export const maxDuration = 30;
 
-type Body = { message?: string; sessionId?: string; turnstileToken?: string };
+type Body = {
+  message?: string;
+  sessionId?: string;
+  turnstileToken?: string;
+  history?: AgentMessage[];
+};
+
+/** Turn retrieval results into numbered sources the model cites as [n]. */
+function buildSources(r: RetrievalResult): AgentSource[] {
+  const sources: AgentSource[] = [];
+  let n = 0;
+
+  // Structured params grouped by source document (authoritative for numbers).
+  const byDoc = new Map<string, string[]>();
+  for (const p of r.parameters) {
+    const doc = p.source_doc || "Spec parameters";
+    const line = `${p.model_id} · ${p.parameter_name}: ${p.value}${p.unit ? ` ${p.unit}` : ""}`;
+    if (!byDoc.has(doc)) byDoc.set(doc, []);
+    byDoc.get(doc)!.push(line);
+  }
+  for (const [doc, lines] of byDoc) {
+    sources.push({ n: ++n, label: doc, body: lines.slice(0, 40).join("\n") });
+  }
+
+  // Explanatory context chunks.
+  for (const c of r.chunks) {
+    const label = c.modelId ? `${c.sourceDoc} (${c.modelId})` : c.sourceDoc;
+    sources.push({ n: ++n, label, body: c.text });
+  }
+  return sources;
+}
+
+function sse(data: unknown): string {
+  return `data: ${JSON.stringify(data)}\n\n`;
+}
 
 export async function POST(
   req: Request,
@@ -30,46 +61,99 @@ export async function POST(
   const { brand } = await params;
   const config = getAgentConfig(brand);
   if (!config) {
-    return NextResponse.json({ error: "unknown_brand" }, { status: 404 });
+    return Response.json({ error: "unknown_brand" }, { status: 404 });
+  }
+  if (!config.enabled) {
+    return Response.json(
+      {
+        error: "not_enabled",
+        message: `The ${config.brandName} agent is coming soon. In the meantime, a specialist can help.`,
+      },
+      { status: 503 },
+    );
   }
 
   const body = (await req.json().catch(() => ({}))) as Body;
   const message = (body.message ?? "").trim();
-  if (!message) {
-    return NextResponse.json({ error: "empty_message" }, { status: 400 });
-  }
-
-  const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for") ?? "unknown";
+  const sessionId = body.sessionId ?? "anon";
+  const ip =
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown";
 
   const decision = await checkGuardrails({
     brand: config.slug,
-    sessionId: body.sessionId ?? "anon",
+    sessionId,
     ip,
     turnstileToken: body.turnstileToken,
     message,
   });
   if (!decision.allowed) {
-    return NextResponse.json(
+    return Response.json(
       { error: decision.reason, message: decision.userMessage },
-      { status: 429 },
+      { status: decision.reason === "input_rejected" ? 400 : 429 },
     );
   }
 
-  // Retrieval (returns empty in the scaffold).
-  const retrieval = await retrieveForBrand(config.d1Brand, config.vectorizeIndex, message);
-  void retrieval;
+  // Retrieve authoritative params + brand-scoped context.
+  let retrieval: RetrievalResult;
+  try {
+    retrieval = await retrieveForBrand(config.d1Brand, config.vectorizeIndex, message);
+  } catch {
+    return Response.json(
+      { error: "retrieval_failed", message: "Couldn't reach the spec data just now. Please try again." },
+      { status: 502 },
+    );
+  }
 
-  // TODO(agent-session): runAgentTurn(...) with prompt caching + streaming,
-  // attach citation chips, then recordSpend(...). Until then, respond 501 so
-  // the contract is explicit and the front end shows the "not available" state.
-  return NextResponse.json(
-    {
-      error: "not_implemented",
-      message:
-        "The catalog agent is scaffolded but not yet wired. See CLAUDE.md § Agents.",
-      brand: config.slug,
-      sellOnly: config.sellOnly,
+  const sources = buildSources(retrieval);
+  const history = (body.history ?? []).slice(-LIMITS.maxHistoryTurns);
+
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const enc = new TextEncoder();
+      let refused = false;
+      try {
+        for await (const ev of streamAgentTurn({
+          tier: config.tier,
+          systemPrompt: config.systemPrompt,
+          sources,
+          history,
+          userMessage: message,
+          maxOutputTokens: config.maxOutputTokens,
+        })) {
+          controller.enqueue(enc.encode(sse(ev)));
+          if (ev.type === "done") {
+            refused = ev.citations.length === 0;
+            await recordSpend({
+              brand: config.slug,
+              sessionId,
+              ip,
+              question: message,
+              inputTokens: ev.usage.inputTokens,
+              outputTokens: ev.usage.outputTokens,
+              cachedInputTokens: ev.usage.cachedInputTokens,
+              costUsd: ev.usage.costUsd,
+              refused,
+              escalated: ev.escalated,
+            });
+          }
+        }
+      } catch {
+        controller.enqueue(
+          enc.encode(sse({ type: "error", message: "The agent hit an error. Please try again." })),
+        );
+      } finally {
+        controller.close();
+      }
     },
-    { status: 501 },
-  );
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+    },
+  });
 }

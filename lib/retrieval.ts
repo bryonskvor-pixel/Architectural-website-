@@ -1,18 +1,13 @@
 /**
  * RETRIEVAL — Cloudflare data tier (D1 structured params + per-brand Vectorize
- * index). Mirrors the REST access pattern proven in pm-intelligence-agent
- * (src/lib/cloudflare.js): the public site runs on Vercel and reaches Cloudflare
- * over the REST API using a scoped token (D1:Edit + Vectorize:Edit + Workers
- * AI:Read). The five indexes and the D1 parameter store are ALREADY POPULATED
- * for all five brands by pm-intelligence-agent — this site only reads them,
- * with new public-scoped prompts. See CLAUDE.md § Data tier.
- *
- * SCAFFOLD: types + the intended call shapes are defined; the network calls are
- * marked TODO and are wired in the agent session.
+ * index), reached over the REST API from Vercel. Mirrors the pattern proven in
+ * pm-intelligence-agent (src/lib/cloudflare.js). The five indexes and the D1
+ * parameter store are ALREADY POPULATED for all brands; this site only reads
+ * them. See CLAUDE.md § Data tier.
  */
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+import { cfFetch, d1Query } from "@/lib/cloudflare";
+
 const PARAMS_DB = process.env.D1_PARAMS_DATABASE_ID;
 
 /** Structured spec parameter row from D1 `parameters` (authoritative for numbers). */
@@ -30,88 +25,124 @@ export type RetrievedChunk = {
   id: string;
   score: number;
   text: string;
+  /** Human-readable source label (Vectorize metadata `section`, or model_id). */
   sourceDoc: string;
-  sourceUrl?: string;
+  modelId?: string;
 };
 
 export type RetrievalResult = {
-  /** Authoritative numeric/spec facts — prefer these over generated numbers. */
   parameters: SpecParameter[];
-  /** Explanatory passages for context and citations. */
   chunks: RetrievedChunk[];
+  /** Max similarity score across chunks — the handler uses this to decide
+   * whether retrieval is confident enough to answer (else escalate). */
+  topScore: number;
 };
 
-function assertConfigured(): void {
-  if (!ACCOUNT_ID || !API_TOKEN) {
-    throw new Error(
-      "CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN must be set (see .env.example)",
-    );
-  }
+/** Embed text with Workers AI bge-base-en-v1.5 (768-dim, matches the indexes). */
+export async function embedText(texts: string[]): Promise<number[][]> {
+  const result = await cfFetch<{ data: number[][] }>(
+    "/ai/run/@cf/baai/bge-base-en-v1.5",
+    { method: "POST", body: JSON.stringify({ text: texts }) },
+  );
+  return result.data;
 }
 
-/** Low-level Cloudflare REST helper (same shape as pm-intelligence-agent). */
-async function cfFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  assertConfigured();
-  const res = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}${path}`,
+type VectorizeMatch = {
+  id: string;
+  score: number;
+  metadata?: { text?: string; section?: string; model_id?: string };
+};
+
+/** Semantic search over a brand's isolated Vectorize index. */
+export async function vectorizeQuery(
+  indexName: string,
+  vector: number[],
+  { topK = 5 }: { topK?: number } = {},
+): Promise<RetrievedChunk[]> {
+  const result = await cfFetch<{ matches: VectorizeMatch[] }>(
+    `/vectorize/v2/indexes/${indexName}/query`,
     {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${API_TOKEN}`,
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      method: "POST",
+      body: JSON.stringify({ vector, topK, returnMetadata: "all" }),
     },
   );
-  const json = (await res.json()) as { success: boolean; errors?: unknown; result: T };
-  if (!json.success) {
-    throw new Error(`Cloudflare API error: ${JSON.stringify(json.errors)}`);
-  }
-  return json.result;
+  return (result.matches ?? []).map((m) => ({
+    id: m.id,
+    score: m.score,
+    text: m.metadata?.text ?? "",
+    sourceDoc: m.metadata?.section ?? m.metadata?.model_id ?? m.id,
+    modelId: m.metadata?.model_id,
+  }));
 }
 
 /**
- * Query authoritative spec parameters for a brand (optionally narrowed to
- * detected model IDs). Numbers served here are versioned and trusted; the agent
- * must prefer them over free-text generation (plan Part 4.4).
+ * Fetch a brand's spec parameters. Always includes brand-wide `*-GENERAL` rows;
+ * if specific models are detected in the message, narrows to those + GENERAL,
+ * otherwise returns the full brand set (small — ~100 rows per brand). Numbers
+ * served here are authoritative and versioned (plan Part 4.4).
  */
 export async function queryParameters(
-  _brand: string,
-  _modelIds?: string[],
+  brand: string,
+  detectedModelIds: string[] = [],
 ): Promise<SpecParameter[]> {
-  // TODO(agent-session): SELECT * FROM parameters WHERE brand = ? [AND model_id IN (...)]
-  // via cfFetch(`/d1/database/${PARAMS_DB}/query`, { method: "POST", body: {...} }).
-  void PARAMS_DB;
-  return [];
-}
-
-/** Embed text with Workers AI bge-base-en-v1.5 (768-dim, matches the indexes). */
-export async function embedText(_texts: string[]): Promise<number[][]> {
-  // TODO(agent-session): POST /ai/run/@cf/baai/bge-base-en-v1.5 → result.data
-  return [];
-}
-
-/** Semantic search over a brand's isolated Vectorize index (no cross-brand bleed). */
-export async function vectorizeQuery(
-  _indexName: string,
-  _vector: number[],
-  _opts: { topK?: number } = {},
-): Promise<RetrievedChunk[]> {
-  // TODO(agent-session): POST /vectorize/v2/indexes/${index}/query → map matches → RetrievedChunk[]
-  return [];
+  if (!PARAMS_DB) throw new Error("D1_PARAMS_DATABASE_ID must be set");
+  const rows = await d1Query<SpecParameter>(
+    PARAMS_DB,
+    "SELECT brand, model_id, parameter_name, value, unit, source_doc FROM parameters WHERE brand = ? ORDER BY model_id, parameter_name",
+    [brand],
+  );
+  if (detectedModelIds.length === 0) return rows;
+  const keep = new Set(detectedModelIds);
+  return rows.filter((r) => keep.has(r.model_id) || r.model_id.endsWith("-GENERAL"));
 }
 
 /**
- * The one call an agent handler makes: given the user's message and a brand,
- * return authoritative parameters + supporting chunks from that brand's index.
- * Low retrieval confidence must surface upstream so the agent can say so and
- * escalate rather than fabricate (plan Part 4.4).
+ * Detect which model_ids a message references, so params can be narrowed. Light
+ * token matching against the brand's known model_ids (derived from the rows):
+ * a model matches when the distinctive tokens after the brand prefix all appear
+ * in the message (e.g. "classic 60" → SKYFOLD-CLASSIC-60; "M2100" → M2100).
+ */
+export function detectModelIds(message: string, modelIds: string[]): string[] {
+  const hay = message.toLowerCase().replace(/[-_]/g, " ");
+  const hits: string[] = [];
+  for (const id of modelIds) {
+    if (id.endsWith("-GENERAL")) continue;
+    const tokens = id.toLowerCase().replace(/^[a-z]+-?/, "").split(/[-_]/).filter(Boolean);
+    const compact = id.toLowerCase().replace(/[-_]/g, "");
+    if (compact && hay.replace(/\s/g, "").includes(compact)) {
+      hits.push(id);
+      continue;
+    }
+    if (tokens.length > 0 && tokens.every((t) => hay.includes(t))) {
+      hits.push(id);
+    }
+  }
+  return hits;
+}
+
+/**
+ * The one call the agent handler makes: authoritative params + supporting
+ * chunks for a brand, plus the top similarity score so the handler can decide
+ * to answer or escalate (plan Part 4.4 — never fabricate on low confidence).
  */
 export async function retrieveForBrand(
-  _brand: string,
-  _indexName: string,
-  _message: string,
+  brand: string,
+  indexName: string,
+  message: string,
 ): Promise<RetrievalResult> {
-  // TODO(agent-session): detect model IDs → queryParameters + embed→vectorizeQuery
-  return { parameters: [], chunks: [] };
+  // One D1 read gives us every model_id for detection + the params themselves.
+  const allRows = await queryParameters(brand, []);
+  const modelIds = Array.from(new Set(allRows.map((r) => r.model_id)));
+  const detected = detectModelIds(message, modelIds);
+  const keep = new Set(detected);
+  const parameters =
+    detected.length === 0
+      ? allRows
+      : allRows.filter((r) => keep.has(r.model_id) || r.model_id.endsWith("-GENERAL"));
+
+  const [vector] = await embedText([message]);
+  const chunks = vector ? await vectorizeQuery(indexName, vector, { topK: 5 }) : [];
+  const topScore = chunks.reduce((m, c) => Math.max(m, c.score), 0);
+
+  return { parameters, chunks, topScore };
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ProductLine } from "@/lib/products";
 import { isSellOnly } from "@/lib/products";
 import { getLineContent } from "@/lib/content";
+import { isAgentEnabled } from "@/lib/agents/pilot";
 import { SectionCutHeader } from "@/components/SectionCutHeader";
 import { AgentPanel } from "@/components/AgentPanel";
 import {
@@ -84,7 +85,7 @@ export function ProductLineTemplate({ line }: { line: ProductLine }) {
           {/* Docked agent rail (right-rail desktop; stacks on mobile). */}
           <aside className="lg:sticky lg:top-8 lg:self-start">
             <div className="py-16 lg:py-0">
-              <AgentPanel line={line} />
+              <AgentPanel line={line} enabled={isAgentEnabled(line.slug)} />
             </div>
           </aside>
         </div>

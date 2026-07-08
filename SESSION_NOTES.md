@@ -1,5 +1,33 @@
 # Session Notes
 
+## 2026-07-08 — Session 3: Agent data tier wired (pilot: Skyfold + Smoke Guard)
+
+**Accomplished — the catalog agents are live end-to-end and validated against the real Cloudflare + Claude services.**
+- **Dedicated D1 database created**: `architectural-web-agent` (`e0188046-2ac2-4485-a6d7-fdb35d38d969`, ENAM) — isolated from the internal PM data. Tables `agent_sessions` + `agent_events` (+ indexes) hold session state, rate-limit counters, and cost logs. The user authorized a separate DB (the shared knowledge DB was correctly off-limits).
+- **Read path** ([lib/retrieval.ts](lib/retrieval.ts) + shared [lib/cloudflare.ts](lib/cloudflare.ts)): D1 param query (brand-scoped), light model-id detection to narrow params, Workers AI `bge-base-en-v1.5` embedding, per-brand Vectorize query. Live-smoke-tested first (106 Skyfold rows, 768-dim, relevant chunks) before building on it.
+- **Claude client** ([lib/claude.ts](lib/claude.ts)): `@anthropic-ai/sdk` streaming, Haiku 4.5, `cache_control` on the static system prompt, numbered-source citations ([n] markers parsed from the stream → exactly the sources used), token+cost accounting.
+- **Guardrails** ([lib/agents/guardrails.ts](lib/agents/guardrails.ts)) against the dedicated D1: input screening, global daily-spend circuit breaker, per-session/minute rate limit, per-session/day cap, Turnstile gate on the first message. Fails **closed** on infra error (money path); allows in dev when no state DB is set.
+- **Shared route** ([app/api/agent/[brand]/route.ts](app/api/agent/[brand]/route.ts)): config → guardrails → retrieve → numbered sources → SSE stream → recordSpend. Non-pilot brands return 503; unknown brands 404.
+- **Full system prompts** ([lib/agents/config.ts](lib/agents/config.ts)): public-scoped, per-brand, with scope/refusal/citation/AHJ rules; sell-only variant redirects install questions. Pilot flag via SDK-free [lib/agents/pilot.ts](lib/agents/pilot.ts) (so the client never bundles the SDK).
+- **AgentPanel client** ([components/AgentPanel.tsx](components/AgentPanel.tsx)): streams SSE, renders inline citation chips, suggested questions, human-escalation link, Turnstile widget (only when a site key is set), and a "coming soon" state for non-pilot lines.
+
+**Validation (live, not just compile):**
+- Skyfold: *"system STC for Classic 60 + support steel?"* → correct answer (system 60 vs panel 66, ±0.5 in over length incl. loaded deflection, ±0.125 in centerline), inline [1]/[6] citations to real source docs, cost $0.0044, event logged to D1.
+- Smoke Guard: elevator-lobby/IBC-3006 question → cited answer **with the mandatory "final determination rests with your AHJ" caveat** + specialist escalation.
+- Non-pilot (Modernfold) → 503. Production `next start` build serves the page (200) and streams answers.
+
+**Known nuances / next steps:**
+- **Prompt caching isn't engaging yet**: Haiku's min cacheable prefix (~2048 tokens) is larger than the current brand system prompt, so `cachedInputTokens` reads 0. Harmless (`cache_control` stays); it'll engage if prompts grow, or we could cache the shared spec context. Not urgent at pilot volume.
+- **Turnstile not provisioned**: no site/secret key yet, so the bot gate is disabled in dev (verify returns true when secret unset). Provision Turnstile keys before public launch and set the env vars.
+- **Anthropic key is still the borrowed one** — swap for a dedicated project key.
+- **Support-steel framing**: the Skyfold agent said Skyfold *supplies/designs* the steel while the page content says "supplied by others" — a real nuance in the source chunk worth reconciling when authoring the other pages / reviewing content.
+- Build needs `outputFileTracingRoot` pinned (added to next.config.ts) because a stray `~/package-lock.json` otherwise makes Next trace the whole home dir and crash with `spawn UNKNOWN` on Windows.
+- **Session 4 options:** enable the other 3 agents (just add to `PILOT_BRANDS` once cost/quality validated) and author their page content; or provision Turnstile + a dedicated API key and do a real public-safety pass; or wire the `/api/rfq` intake + the human-escalation pre-fill.
+
+**Context for a fresh agent:** agents are gated by `PILOT_BRANDS` in [lib/agents/pilot.ts](lib/agents/pilot.ts) (currently skyfold + smoke-guard). Cost/usage lands in the `architectural-web-agent` D1 (`e0188046…`) — query `agent_events` to monitor spend and mine long-tail questions. `.env.local` holds working creds (gitignored); `.env.example` documents them.
+
+---
+
 ## 2026-07-07 — Session 2: Skyfold reference page
 
 **Accomplished:**
