@@ -1,5 +1,39 @@
 # Session Notes
 
+## 2026-07-08 — Session 5: RFQ lead intake + agent human-escalation pre-fill (launch hardening, pt. 1)
+
+**Accomplished — the quote/RFI path is live end-to-end and the agents hand off into it.** Session 4 was pushed to origin/main first, as requested.
+- **`/api/rfq` wired** ([app/api/rfq/route.ts](app/api/rfq/route.ts)) from a 501 stub to a working intake: validate (email + message, length caps) → **Turnstile-verify** (reuses the agents' `verifyTurnstile`; dev-bypassed when no secret) → **persist to the web-agent D1** (`e0188046…`, new `rfq_submissions` table). Intent framing gates on `isSellOnly()` — Airolite → **"takeoff"**, install lines → **"field-measure"** (never by name). Persist failure returns **502** so a real lead is never silently dropped; local dev (no `WEB_AGENT_D1`) accepts so the form is testable.
+- **Real RFQ form** ([components/RfqForm.tsx](components/RfqForm.tsx)) in the site's design language, with the Turnstile widget (only when a site key is set) and a sell-only CTA ("Request takeoff" vs "Request quote"). Rendered on [request-quote](app/contact/request-quote/page.tsx) inside a `Suspense` boundary (Next 15 `useSearchParams` requirement).
+- **Agent escalation pre-fill** ([components/AgentPanel.tsx](components/AgentPanel.tsx)): `sessionId` moved ref→state so the escalation href reliably carries it; both "Talk to a specialist" links now point to the RFI form pre-filled with `?line=&topic=<last question>&session=&source=agent-escalation`. The form reads those params to pre-fill the product line + message. (Plan Part 4.5: "routes to RFI form pre-filled with the conversation topic and product line.")
+- **Validation (live):** install submit → `intent=field-measure, persisted:true`; sell-only Airolite → `intent=takeoff` + `agent_session_id` linkage; bad email / empty message → 400. Test rows deleted afterward (table clean). `typecheck` clean; `build` green.
+
+**Lead delivery decision:** D1 capture only for now — CLAUDE.md forbids new paid services and Cloudflare Email Routing needs the (unfinalized) `[company].com` domain. An email/CRM notifier can hook off `rfq_submissions` once the domain lands.
+
+**`rfq_submissions` DDL** (created this session in the web-agent D1; recorded here since the project has no migrations file — same convention as the Session 3 tables):
+```sql
+CREATE TABLE IF NOT EXISTS rfq_submissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL,
+  name TEXT, email TEXT NOT NULL, company TEXT, phone TEXT,
+  product_line TEXT, intent TEXT, message TEXT NOT NULL,
+  source TEXT, agent_session_id TEXT, ip TEXT);
+CREATE INDEX IF NOT EXISTS idx_rfq_ts   ON rfq_submissions (ts);
+CREATE INDEX IF NOT EXISTS idx_rfq_line ON rfq_submissions (product_line);
+```
+
+**STILL NEEDS YOU (secrets / account actions I can't do headless — the code is already plug-and-play):**
+1. **Turnstile** — create a widget in the Cloudflare dashboard (or via a Turnstile-scoped token + the `turnstile-spin` skill), then set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` in `.env.local` **and** in Vercel. The gate then auto-engages on the first agent message and on RFQ submit (both already call `verifyTurnstile`). Until then it's dev-bypassed (open).
+2. **Dedicated Anthropic key** — mint a project key in the Anthropic console, replace the borrowed `ANTHROPIC_API_KEY` in `.env.local` + Vercel.
+3. **Scoped Cloudflare token** — a token limited to D1:Edit + Vectorize:Edit + Workers AI:Read for `CLOUDFLARE_API_TOKEN` (retire any broad token).
+
+**Remaining Session 5 / launch-hardening backlog (code, can be done next):**
+- Email/CRM notifier off `rfq_submissions` once a domain exists (Cloudflare Email Routing is free and in-budget).
+- Lightweight spend/lead dashboard or query over `agent_events` + `rfq_submissions`.
+- Make prompt caching engage (cache the shared spec context) — still reads 0 cached tokens.
+- Wire the header/footer persistent "Request a Quote" CTA to the new form (verify it points at `/contact/request-quote`).
+
+---
+
 ## 2026-07-08 — Session 4: All product content authored + full agent roster live
 
 **Accomplished — the four remaining product lines are authored from real D1 data and every agent is enabled.**
