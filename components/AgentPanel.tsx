@@ -39,16 +39,27 @@ export function AgentPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
-  const sessionId = useRef<string>("");
+  const [sessionId, setSessionId] = useState("");
   const turnstileRef = useRef<HTMLDivElement>(null);
   const sellOnly = isSellOnly(line);
 
   useEffect(() => {
-    sessionId.current =
+    setSessionId(
       typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
-        : `s-${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
+        : `s-${Date.now()}-${Math.floor(Math.random() * 1e9)}`,
+    );
   }, []);
+
+  // Human-escalation target: the RFI form, pre-filled with this line, the last
+  // question asked, and the session id (plan Part 4.5).
+  const lastUserQuestion = [...turns].reverse().find((t) => t.role === "user")?.text ?? "";
+  const escalationHref = (() => {
+    const p = new URLSearchParams({ line: line.slug, source: "agent-escalation" });
+    if (sessionId) p.set("session", sessionId);
+    if (lastUserQuestion) p.set("topic", lastUserQuestion.slice(0, 300));
+    return `/contact/request-quote?${p.toString()}`;
+  })();
 
   // Render the Turnstile widget once, only when a site key is configured.
   useEffect(() => {
@@ -110,7 +121,7 @@ export function AgentPanel({
         const res = await fetch(`/api/agent/${line.slug}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message, sessionId: sessionId.current, turnstileToken, history }),
+          body: JSON.stringify({ message, sessionId, turnstileToken, history }),
         });
 
         if (!res.ok || !res.body) {
@@ -163,7 +174,7 @@ export function AgentPanel({
         setBusy(false);
       }
     },
-    [busy, line.slug, line.name, turns, turnstileToken],
+    [busy, line.slug, line.name, turns, turnstileToken, sessionId],
   );
 
   return (
@@ -185,7 +196,7 @@ export function AgentPanel({
           <div>
             <p className="text-sm text-ink-muted">
               The {line.name} agent is coming soon. In the meantime, a {" "}
-              <a href="/contact/request-quote" className="text-accent hover:underline">
+              <a href={escalationHref} className="text-accent hover:underline">
                 {line.name} specialist
               </a>{" "}
               can answer your spec questions directly.
@@ -291,7 +302,7 @@ export function AgentPanel({
 
             <div className="mt-3 flex items-center justify-between gap-2">
               <a
-                href="/contact/request-quote"
+                href={escalationHref}
                 className="font-mono text-[11px] text-ink-muted hover:text-accent"
               >
                 Talk to a {line.name} specialist →
