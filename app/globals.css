@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/**
+ * Design system per plan Part 5. Colors are driven by CSS custom properties
+ * emitted from lib/brand.ts (see brandCssVars) and injected in the root layout,
+ * so the whole site re-themes from that one object. Typography variables
+ * (--font-serif / --font-sans / --font-mono) are set by next/font in layout.tsx.
+ *
+ * Guardrails baked in here (do not reintroduce): no drop shadows, no gradients,
+ * hairline 1px borders only, color used only for semantic meaning.
+ */
+
+@theme inline {
+  --color-canvas: var(--color-canvas);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-hairline: var(--color-hairline);
+  --color-accent: var(--color-accent);
+  --color-accent-ink: var(--color-accent-ink);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+/* Fallback palette values so the site renders even before layout injection.
+   The active brand palette overrides these on :root at runtime. */
+:root {
+  --color-canvas: #f7f6f3;
+  --color-surface: #fbfbfa;
+  --color-ink: #111111;
+  --color-ink-muted: #5a5f63;
+  --color-hairline: #eaeaea;
+  --color-accent: #c8552b;
+  --color-accent-ink: #fbfbfa;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Editorial serif headings, tight tracking (plan Part 5.1). */
+.font-serif {
+  font-family: var(--font-serif), ui-serif, Georgia, serif;
+  letter-spacing: -0.02em;
+}
+
+/* Monospace = the "technical instrument" voice: dimensions, CSI numbers,
+   ratings, agent source labels. */
+.font-mono {
+  font-family: var(--font-mono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+/* Respect user motion preferences — all product-motion effects are
+   transform/opacity only and must yield here (plan Part 5.2/5.3). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "architectural-website",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Premium technical website for [COMPANY], an Ohio Division 08/10 specialty architectural products dealer-installer. Name-agnostic by design — see /lib/brand.ts.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
+  }
+}
