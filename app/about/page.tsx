@@ -1,5 +1,6 @@
 import { activeBrand } from "@/lib/brand";
 import { productLines } from "@/lib/products";
+import { team } from "@/lib/content/team";
 import { CsiChip } from "@/components/SpecBand";
 import {
   PageHero,
@@ -9,6 +10,7 @@ import {
   Card,
   Callout,
   CtaBand,
+  TeamGrid,
 } from "@/components/Marketing";
 
 export const metadata = {
@@ -88,6 +90,12 @@ export default function AboutPage() {
           ))}
         </CardGrid>
       </Section>
+
+      {team.length > 0 && (
+        <Section eyebrow="Who you work with" title="The team">
+          <TeamGrid members={team} />
+        </Section>
+      )}
 
       <Section eyebrow="What we carry" title="Five complementary lines">
         <div className="grid gap-px border border-hairline bg-hairline sm:grid-cols-2">

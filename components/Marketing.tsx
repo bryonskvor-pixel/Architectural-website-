@@ -175,6 +175,48 @@ export function Card({
   return <div className="bg-canvas p-8">{inner}</div>;
 }
 
+/** Team roster grid — optional square photo + name + role + optional meta/bio. */
+export function TeamGrid({
+  members,
+}: {
+  members: {
+    name: string;
+    role: string;
+    bio?: string;
+    photo?: string;
+    meta?: string;
+  }[];
+}) {
+  return (
+    <div className="grid gap-px border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
+      {members.map((m) => (
+        <div key={m.name} className="bg-canvas p-6">
+          {m.photo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={m.photo}
+              alt={m.name}
+              className="mb-4 aspect-square w-full max-w-[9rem] object-cover"
+            />
+          )}
+          <h3 className="font-serif text-xl text-ink">{m.name}</h3>
+          <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-accent">
+            {m.role}
+          </p>
+          {m.meta && (
+            <p className="mt-1 font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+              {m.meta}
+            </p>
+          )}
+          {m.bio && (
+            <p className="mt-3 text-sm leading-relaxed text-ink-muted">{m.bio}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Numbered process steps — mono index, serif title, muted body + optional meta. */
 export function NumberedSteps({
   steps,
