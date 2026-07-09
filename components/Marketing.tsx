@@ -84,14 +84,17 @@ export function Section({
   title,
   children,
   className = "",
+  id,
 }: {
   eyebrow?: string;
   title?: string;
   children: React.ReactNode;
   className?: string;
+  /** Optional anchor id for in-page links (e.g. #team). */
+  id?: string;
 }) {
   return (
-    <section className={`border-t border-hairline ${className}`}>
+    <section id={id} className={`scroll-mt-24 border-t border-hairline ${className}`}>
       <Container className="py-16">
         {eyebrow && (
           <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">

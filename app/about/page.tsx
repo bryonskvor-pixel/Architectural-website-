@@ -19,7 +19,7 @@ export const metadata = {
     "Ohio's specialty architectural products partner — one accountable team that specifies, supplies, installs, and services Division 08 and 10 systems.",
 };
 
-const VALUES = [
+const VALUES: { title: string; body: string; teamLink?: boolean }[] = [
   {
     title: "Technical depth first",
     body: "Real spec data, ratings, and structural requirements — plus a catalog agent per line that cites its sources. We built the resource the industry was missing.",
@@ -27,6 +27,7 @@ const VALUES = [
   {
     title: "One accountable team",
     body: "Specify, supply, field-measure, install, and service under one roof. No seam between supplier and installer for a problem to hide in.",
+    teamLink: true,
   },
   {
     title: "Factory-trained craft",
@@ -86,13 +87,23 @@ export default function AboutPage() {
           {VALUES.map((v) => (
             <Card key={v.title} title={v.title}>
               {v.body}
+              {v.teamLink && team.length > 0 && (
+                <p className="mt-4">
+                  <a
+                    href="#team"
+                    className="font-mono text-xs uppercase tracking-wide text-accent hover:underline"
+                  >
+                    Meet the team →
+                  </a>
+                </p>
+              )}
             </Card>
           ))}
         </CardGrid>
       </Section>
 
       {team.length > 0 && (
-        <Section eyebrow="Who you work with" title="The team">
+        <Section id="team" eyebrow="Who you work with" title="The team">
           <TeamGrid members={team} />
         </Section>
       )}
