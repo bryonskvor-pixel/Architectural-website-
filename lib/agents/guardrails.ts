@@ -1,4 +1,4 @@
-import { d1Query } from "@/lib/cloudflare";
+import { d1Query, DB_IDS, isCloudflareConfigured } from "@/lib/cloudflare";
 
 /**
  * GUARDRAILS — public-deployment safeguards for the catalog agents
@@ -14,7 +14,7 @@ import { d1Query } from "@/lib/cloudflare";
  * so the flow is testable.
  */
 
-const WEB_DB = process.env.WEB_AGENT_D1_DATABASE_ID;
+const WEB_DB = DB_IDS.webAgent;
 const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY;
 
 export type GuardrailContext = {
@@ -84,8 +84,8 @@ export async function checkGuardrails(ctx: GuardrailContext): Promise<GuardrailD
     };
   }
 
-  // No state DB configured (local dev) → allow so the flow is testable.
-  if (!WEB_DB) return { allowed: true };
+  // No Cloudflare credentials (local dev) → allow so the flow is testable.
+  if (!isCloudflareConfigured()) return { allowed: true };
 
   const now = Date.now();
   try {
@@ -188,7 +188,7 @@ export async function recordSpend(args: {
   refused: boolean;
   escalated: boolean;
 }): Promise<void> {
-  if (!WEB_DB) return;
+  if (!isCloudflareConfigured()) return;
   const now = Date.now();
   try {
     await d1Query(

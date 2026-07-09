@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { d1Query } from "@/lib/cloudflare";
+import { d1Query, DB_IDS, isCloudflareConfigured } from "@/lib/cloudflare";
 import { verifyTurnstile } from "@/lib/agents/guardrails";
 import { getLine, isSellOnly } from "@/lib/products";
 
@@ -18,7 +18,7 @@ import { getLine, isSellOnly } from "@/lib/products";
  */
 export const runtime = "nodejs";
 
-const WEB_DB = process.env.WEB_AGENT_D1_DATABASE_ID;
+const WEB_DB = DB_IDS.webAgent;
 
 type RfqBody = {
   name?: string;
@@ -80,8 +80,8 @@ export async function POST(req: Request) {
 
   const intent = intentFor(body.productLine);
 
-  // No state DB configured (local dev) → accept so the form is testable.
-  if (!WEB_DB) {
+  // No Cloudflare credentials (local dev) → accept so the form is testable.
+  if (!isCloudflareConfigured()) {
     return NextResponse.json({ ok: true, intent, persisted: false });
   }
 

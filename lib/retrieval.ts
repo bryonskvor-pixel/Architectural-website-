@@ -6,9 +6,9 @@
  * them. See CLAUDE.md § Data tier.
  */
 
-import { cfFetch, d1Query } from "@/lib/cloudflare";
+import { cfFetch, d1Query, DB_IDS } from "@/lib/cloudflare";
 
-const PARAMS_DB = process.env.D1_PARAMS_DATABASE_ID;
+const PARAMS_DB = DB_IDS.params;
 
 /** Structured spec parameter row from D1 `parameters` (authoritative for numbers). */
 export type SpecParameter = {
