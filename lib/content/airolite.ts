@@ -1,4 +1,5 @@
 import type { LineContent } from "@/lib/content/types";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * AIROLITE content — architectural louvers, grilles, sun controls & screens
@@ -8,7 +9,7 @@ import type { LineContent } from "@/lib/content/types";
  * agent cite the same documents. Confirm against the manufacturer's current
  * published spec / AMCA data at build (plan Caveats) before launch.
  *
- * SELL-ONLY (plan Part 2.1): Airolite is supplied by [COMPANY] and installed by
+ * SELL-ONLY (plan Part 2.1): Airolite is supplied by the dealer and installed by
  * others. This content therefore carries NO gcReadiness module — the sell-vs-
  * install gate suppresses it structurally — and its framing is supply-only.
  */
@@ -27,7 +28,7 @@ const STRUCT = "Airolite standard product detail sheets (K8206, T6636, AC153, K6
 
 export const airoliteContent: LineContent = {
   overview:
-    "Airolite architectural louvers, grilles, sun controls, and equipment screens are supplied by [COMPANY] and installed by others. The line spans drainable weather louvers (K6776, K8206), adjustable and narrow-profile louvers (T6636, AC153), extruded-aluminum airfoil sun controls (ASC4/ASC6), and a broad grille and screen family — much of it on Airolite's Qwik Ship program for 1–20 day lead times. Selection comes down to two numbers that trade against each other: free area (how much air the louver passes) and the water-penetration beginning point (how much weather it stops). Because we supply rather than install, our value-add is fast, accurate takeoffs and matching the right model, size, and finish to each opening's airflow, exposure, and code requirements.",
+    `Airolite architectural louvers, grilles, sun controls, and equipment screens are supplied by ${activeBrand.name} and installed by others. The line spans drainable weather louvers (K6776, K8206), adjustable and narrow-profile louvers (T6636, AC153), extruded-aluminum airfoil sun controls (ASC4/ASC6), and a broad grille and screen family — much of it on Airolite's Qwik Ship program for 1–20 day lead times. Selection comes down to two numbers that trade against each other: free area (how much air the louver passes) and the water-penetration beginning point (how much weather it stops). Because we supply rather than install, our value-add is fast, accurate takeoffs and matching the right model, size, and finish to each opening's airflow, exposure, and code requirements.`,
 
   applications: [
     "Mechanical intake and exhaust openings needing rated airflow with weather protection (K6776, K8206).",
@@ -104,7 +105,7 @@ export const airoliteContent: LineContent = {
   resources: [
     { label: "Airolite spec sheets, AMCA data & CSI specs", kind: "link", note: "Authoritative, manufacturer-updated — linked, not mirrored.", href: "https://www.airolite.com" },
     { label: "Airolite finishes & color catalog", kind: "link", note: "Full AAMA-tier finish and color options from the manufacturer.", href: "https://www.airolite.com" },
-    { label: "[COMPANY] Airolite Qwik-Ship lead-time & takeoff guide", kind: "host", note: "Supply-only value-add — fast, accurate takeoffs and current lead times." },
-    { label: "[COMPANY] louver free-area & water-rating selection worksheet", kind: "host", note: "Match model, size, and finish to each opening's airflow and exposure." },
+    { label: `${activeBrand.name} Airolite Qwik-Ship lead-time & takeoff guide`, kind: "host", note: "Supply-only value-add — fast, accurate takeoffs and current lead times." },
+    { label: `${activeBrand.name} louver free-area & water-rating selection worksheet`, kind: "host", note: "Match model, size, and finish to each opening's airflow and exposure." },
   ],
 };

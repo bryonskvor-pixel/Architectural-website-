@@ -1,4 +1,5 @@
 import type { LineContent } from "@/lib/content/types";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * SMOKE GUARD content — fire + smoke containment (IBC §3006 / 08-series). Every
@@ -118,7 +119,7 @@ export const smokeGuardContent: LineContent = {
   resources: [
     { label: "Smoke Guard model tech sheets & UL listings", kind: "link", note: "Authoritative, manufacturer-updated — linked, not mirrored.", href: "https://www.smokeguard.com" },
     { label: "Smoke Guard 3-part specs (08-series / IBC §3006)", kind: "link", note: "Download the current guide specs from the manufacturer / ARCAT.", href: "https://www.arcat.com" },
-    { label: "[COMPANY] Smoke Guard fire-alarm interface & deploy-timing checklist", kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
-    { label: "[COMPANY] regional Smoke Guard / elevator-code installations", kind: "host", note: "Ohio project photography and references." },
+    { label: `${activeBrand.name} Smoke Guard fire-alarm interface & deploy-timing checklist`, kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
+    { label: `${activeBrand.name} regional Smoke Guard / elevator-code installations`, kind: "host", note: "Ohio project photography and references." },
   ],
 };

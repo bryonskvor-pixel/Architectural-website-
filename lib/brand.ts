@@ -1,10 +1,10 @@
 /**
  * BRAND TOKENS — single source of truth for the company's name, wordmark, and
- * visual identity. The company has NO final name yet; the placeholder is
- * [COMPANY]. Every user-facing reference to the company MUST read from this
- * module (or the CSS custom properties it emits) — never hard-code a name,
- * color, or typeface anywhere else. Swapping the final brand happens here and
- * only here. See CLAUDE.md § "Brand-token indirection".
+ * visual identity. The finalized brand is Integrated Architectural Solutions
+ * (mark: IAS); it lives ONLY in `activeBrand` below. Every user-facing reference
+ * to the company MUST read from this module (or the CSS custom properties it
+ * emits) — never hard-code a name, color, or typeface anywhere else. Rebranding
+ * happens here and only here. See CLAUDE.md § "Brand-token indirection".
  */
 
 export type BrandPalette = {
@@ -68,8 +68,10 @@ export type BrandTypography = {
 };
 
 export type Brand = {
-  /** Placeholder company name. Swap to the final name here, once. */
+  /** Full company name. Swap to the final name here, once. */
   name: string;
+  /** Compact monogram/mark for tight spots (header, favicon). */
+  mark: string;
   /** Legal/footer form, if different from `name`. */
   legalName: string;
   /** One-line positioning (plan Part 1.1). */
@@ -86,13 +88,16 @@ export type Brand = {
 };
 
 export const activeBrand: Brand = {
-  name: "[COMPANY]",
-  legalName: "[COMPANY], LLC",
+  name: "Integrated Architectural Solutions",
+  mark: "IAS",
+  legalName: "Integrated Architectural Solutions, LLC",
   positioning:
     "Ohio's specialty architectural products partner — specify, supply, field-measure, install, and service.",
   region: "Ohio and surrounding regions",
   paletteName: "bone",
-  palette: palettes.bone,
+  // Bone canvas (the logo sits on warm concrete), retuned with the mark's
+  // steel-teal as the single accent so CTAs read as the brand, not against it.
+  palette: { ...palettes.bone, accent: "#2A6E88", accentInk: "#FBFBFA" },
   typography: {
     // Actual @font-face / next-font wiring lives in app/layout.tsx; these are the
     // CSS-variable references the design system consumes.

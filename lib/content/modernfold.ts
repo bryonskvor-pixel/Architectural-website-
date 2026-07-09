@@ -1,4 +1,5 @@
 import type { LineContent } from "@/lib/content/types";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * MODERNFOLD content — operable partitions (CSI 10 22 26). Every number below is
@@ -109,7 +110,7 @@ export const modernfoldContent: LineContent = {
   resources: [
     { label: "Modernfold CAD / BIM & 3-part specs", kind: "link", note: "Authoritative, manufacturer-updated — linked, not mirrored.", href: "https://www.modernfold.com" },
     { label: "Acousti-Seal & Encore spec sheets (CSI 10 22 26)", kind: "link", note: "Download the current guide specs from ARCAT.", href: "https://www.arcat.com" },
-    { label: "[COMPANY] Modernfold header, pocket & plenum readiness checklist", kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
-    { label: "[COMPANY] regional Modernfold installations", kind: "host", note: "Ohio project photography and references." },
+    { label: `${activeBrand.name} Modernfold header, pocket & plenum readiness checklist`, kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
+    { label: `${activeBrand.name} regional Modernfold installations`, kind: "host", note: "Ohio project photography and references." },
   ],
 };

@@ -2,7 +2,7 @@
   "name": "architectural-website",
   "version": "0.1.0",
   "private": true,
-  "description": "Premium technical website for [COMPANY], an Ohio Division 08/10 specialty architectural products dealer-installer. Name-agnostic by design — see /lib/brand.ts.",
+  "description": "Premium technical website for Integrated Architectural Solutions (IAS), an Ohio Division 08/10 specialty architectural products dealer-installer. Name-agnostic by design — see /lib/brand.ts.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

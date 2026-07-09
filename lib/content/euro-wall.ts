@@ -1,4 +1,5 @@
 import type { LineContent } from "@/lib/content/types";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * EURO-WALL content — architectural glass wall systems (CSI 08 43 33). Every
@@ -118,7 +119,7 @@ export const euroWallContent: LineContent = {
   resources: [
     { label: "Euro-Wall Vista brochures, install guides & FL approvals", kind: "link", note: "Authoritative, manufacturer-updated — linked, not mirrored.", href: "https://www.euro-wall.com" },
     { label: "Vista 3-part specs (CSI 08 43 33)", kind: "link", note: "Download the current guide specs from the manufacturer / ARCAT.", href: "https://www.arcat.com" },
-    { label: "[COMPANY] Euro-Wall header, sill & design-pressure readiness checklist", kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
-    { label: "[COMPANY] regional Euro-Wall installations", kind: "host", note: "Ohio project photography and references." },
+    { label: `${activeBrand.name} Euro-Wall header, sill & design-pressure readiness checklist`, kind: "host", note: "Dealer value-add — the GC coordination list above as a one-page PDF." },
+    { label: `${activeBrand.name} regional Euro-Wall installations`, kind: "host", note: "Ohio project photography and references." },
   ],
 };

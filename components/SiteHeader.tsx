@@ -13,8 +13,12 @@ export function SiteHeader() {
   return (
     <header className="border-b border-hairline bg-canvas">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="no-underline">
-          <Wordmark className="text-xl" />
+        <Link href="/" className="flex items-baseline gap-2 no-underline">
+          <Wordmark variant="mark" className="text-xl font-semibold" />
+          <Wordmark
+            variant="full"
+            className="hidden text-sm text-ink-muted lg:inline"
+          />
         </Link>
 
         <nav

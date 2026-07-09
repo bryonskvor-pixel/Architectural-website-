@@ -1,4 +1,5 @@
 import type { LineContent } from "@/lib/content/types";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * SKYFOLD content — the reference implementation. Every number below is drawn
@@ -107,7 +108,7 @@ export const skyfoldContent: LineContent = {
     { label: "Skyfold CAD / BIM library", kind: "link", note: "Authoritative, manufacturer-updated — linked, not mirrored.", href: "https://www.skyfold.com" },
     { label: "Classic 3-part spec (CSI 10 22 39)", kind: "link", note: "Download the current guide spec from ARCAT.", href: "https://www.arcat.com" },
     { label: "Notes to G.C. drawings", kind: "link", note: "Manufacturer coordination drawings for support steel and pocket.", href: "https://www.skyfold.com" },
-    { label: "[COMPANY] Skyfold structural & electrical readiness checklist", kind: "host", note: "Dealer value-add — the GC punch list above as a one-page PDF." },
-    { label: "[COMPANY] regional Skyfold installations", kind: "host", note: "Ohio project photography and references." },
+    { label: `${activeBrand.name} Skyfold structural & electrical readiness checklist`, kind: "host", note: "Dealer value-add — the GC punch list above as a one-page PDF." },
+    { label: `${activeBrand.name} regional Skyfold installations`, kind: "host", note: "Ohio project photography and references." },
   ],
 };

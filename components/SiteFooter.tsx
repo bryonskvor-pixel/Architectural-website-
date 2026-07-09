@@ -55,8 +55,8 @@ export function SiteFooter() {
       <div className="border-t border-hairline">
         <div className="mx-auto max-w-6xl px-6 py-6 font-mono text-xs text-ink-muted">
           © {activeBrand.legalName}. {activeBrand.region}. Manufacturer names are
-          trademarks of their respective owners; [COMPANY] is an independent
-          authorized dealer-installer.
+          trademarks of their respective owners; {activeBrand.name} is an
+          independent authorized dealer-installer.
         </div>
       </div>
     </footer>

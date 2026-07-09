@@ -1,14 +1,15 @@
-# [COMPANY] — Specialty Architectural Products Website
+# Integrated Architectural Solutions (IAS) — Specialty Architectural Products Website
 
-Public marketing + technical website for **[COMPANY]**, an Ohio Division 08/10
+Public marketing + technical website for **Integrated Architectural Solutions**, an Ohio Division 08/10
 specialty architectural products **dealer-installer** (Euro-Wall, Skyfold,
 Modernfold, Smoke Guard, Airolite). The signature feature is five per-line
 conversational **catalog agents** that answer spec questions with citations,
 backed by the Cloudflare D1 + Vectorize data tier already populated in the
 sister `pm-intelligence-agent` project.
 
-The company has **no final name yet** — it is `[COMPANY]` everywhere and swaps in
-one place ([`lib/brand.ts`](lib/brand.ts)).
+The brand is finalized as **Integrated Architectural Solutions** (mark: IAS), but
+it stays name-agnostic by design — the name, palette, and mark live in one place
+([`lib/brand.ts`](lib/brand.ts)) and every reference reads from that token.
 
 ## Stack
 Next.js (App Router, TypeScript) + Tailwind v4 on **Vercel** · **Cloudflare** D1

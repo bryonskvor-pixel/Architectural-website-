@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { productLines, getLine, isSellOnly, type BrandSlug } from "@/lib/products";
+import { activeBrand } from "@/lib/brand";
 
 /**
  * Request a Quote / RFI form (plan Part 6.2). Posts to /api/rfq, which persists
@@ -116,7 +117,7 @@ export function RfqForm() {
       <div className="border border-accent bg-surface p-6">
         <p className="font-mono text-xs uppercase tracking-wide text-accent">Request received</p>
         <p className="mt-3 text-lg text-ink">
-          Thanks{name ? `, ${name.split(" ")[0]}` : ""} — a {selected ? selected.name : "[COMPANY]"}{" "}
+          Thanks{name ? `, ${name.split(" ")[0]}` : ""} — a {selected ? selected.name : activeBrand.name}{" "}
           specialist will follow up shortly.
         </p>
         <p className="mt-2 text-sm text-ink-muted">
