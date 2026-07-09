@@ -84,6 +84,14 @@ export type Brand = {
   contact: {
     phone: string;
     email: string;
+    /** Physical address. Optional fields render only when present. */
+    address?: {
+      line1: string;
+      line2?: string;
+      city: string;
+      state: string;
+      zip?: string;
+    };
   };
 };
 
@@ -108,6 +116,12 @@ export const activeBrand: Brand = {
   contact: {
     phone: "(000) 000-0000",
     email: "hello@[company].com",
+    address: {
+      line1: "16306 Detroit Avenue, Unit 120",
+      city: "Lakewood",
+      state: "OH",
+      // zip: "44107", // TODO: confirm ZIP, then uncomment to publish full address
+    },
   },
 };
 
@@ -127,4 +141,27 @@ export function brandCssVars(brand: Brand = activeBrand): string {
     `--color-accent:${p.accent}`,
     `--color-accent-ink:${p.accentInk}`,
   ].join(";");
+}
+
+/**
+ * Contact-field readiness. Phone and email still hold placeholder sentinels
+ * until the real values exist; these guards let the UI render only real contact
+ * details — never "(000) 000-0000" or "hello@[company].com" — on the live site.
+ */
+export function isPlaceholderPhone(brand: Brand = activeBrand): boolean {
+  return /0{3}/.test(brand.contact.phone);
+}
+
+export function isPlaceholderEmail(brand: Brand = activeBrand): boolean {
+  return brand.contact.email.includes("[company]");
+}
+
+/** Address as display lines (e.g. ["16306 …", "Lakewood, OH"]); [] when unset. */
+export function addressLines(brand: Brand = activeBrand): string[] {
+  const a = brand.contact.address;
+  if (!a) return [];
+  const locality = [[a.city, a.state].filter(Boolean).join(", "), a.zip]
+    .filter(Boolean)
+    .join(" ");
+  return [a.line1, a.line2, locality].filter(Boolean) as string[];
 }

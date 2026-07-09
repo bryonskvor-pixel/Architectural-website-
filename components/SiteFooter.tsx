@@ -1,5 +1,10 @@
 import Link from "next/link";
-import { activeBrand } from "@/lib/brand";
+import {
+  activeBrand,
+  addressLines,
+  isPlaceholderPhone,
+  isPlaceholderEmail,
+} from "@/lib/brand";
 import { solutionCategories, productLines } from "@/lib/products";
 
 /**
@@ -15,11 +20,29 @@ export function SiteFooter() {
           <p className="mt-3 max-w-xs text-sm text-ink-muted">
             {activeBrand.positioning}
           </p>
-          <p className="mt-4 font-mono text-xs text-ink-muted">
-            {activeBrand.contact.phone}
-            <br />
-            {activeBrand.contact.email}
-          </p>
+          <address className="mt-4 space-y-0.5 font-mono text-xs not-italic text-ink-muted">
+            {addressLines().map((line) => (
+              <span key={line} className="block">
+                {line}
+              </span>
+            ))}
+            {!isPlaceholderPhone() && (
+              <a
+                href={`tel:${activeBrand.contact.phone.replace(/[^0-9+]/g, "")}`}
+                className="block hover:text-ink"
+              >
+                {activeBrand.contact.phone}
+              </a>
+            )}
+            {!isPlaceholderEmail() && (
+              <a
+                href={`mailto:${activeBrand.contact.email}`}
+                className="block hover:text-ink"
+              >
+                {activeBrand.contact.email}
+              </a>
+            )}
+          </address>
         </div>
 
         <FooterCol title="Solutions">

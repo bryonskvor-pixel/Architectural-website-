@@ -1,4 +1,9 @@
-import { activeBrand } from "@/lib/brand";
+import {
+  activeBrand,
+  addressLines,
+  isPlaceholderPhone,
+  isPlaceholderEmail,
+} from "@/lib/brand";
 import { PageHero, Section, CardGrid, Card, Callout } from "@/components/Marketing";
 
 export const metadata = {
@@ -42,28 +47,46 @@ export default function ContactPage() {
         </CardGrid>
       </Section>
 
-      <Section eyebrow="Reach us directly" title="By phone or email">
+      <Section eyebrow="Reach us directly" title="Visit, call, or email">
         <dl className="grid gap-px border border-hairline bg-hairline sm:grid-cols-2">
-          <div className="bg-canvas p-6">
-            <dt className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
-              Phone
-            </dt>
-            <dd className="mt-2 font-mono text-lg text-ink">
-              <a href={phoneHref} className="hover:text-accent">
-                {activeBrand.contact.phone}
-              </a>
-            </dd>
-          </div>
-          <div className="bg-canvas p-6">
-            <dt className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
-              Email
-            </dt>
-            <dd className="mt-2 font-mono text-lg text-ink">
-              <a href={emailHref} className="hover:text-accent">
-                {activeBrand.contact.email}
-              </a>
-            </dd>
-          </div>
+          {addressLines().length > 0 && (
+            <div className="bg-canvas p-6">
+              <dt className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                Office
+              </dt>
+              <dd className="mt-2 font-mono text-lg leading-snug text-ink">
+                {addressLines().map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </dd>
+            </div>
+          )}
+          {!isPlaceholderPhone() && (
+            <div className="bg-canvas p-6">
+              <dt className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                Phone
+              </dt>
+              <dd className="mt-2 font-mono text-lg text-ink">
+                <a href={phoneHref} className="hover:text-accent">
+                  {activeBrand.contact.phone}
+                </a>
+              </dd>
+            </div>
+          )}
+          {!isPlaceholderEmail() && (
+            <div className="bg-canvas p-6">
+              <dt className="font-mono text-[11px] uppercase tracking-wide text-ink-muted">
+                Email
+              </dt>
+              <dd className="mt-2 font-mono text-lg text-ink">
+                <a href={emailHref} className="hover:text-accent">
+                  {activeBrand.contact.email}
+                </a>
+              </dd>
+            </div>
+          )}
         </dl>
         <p className="mt-4 font-mono text-xs text-ink-muted">
           {activeBrand.name} · {activeBrand.region}

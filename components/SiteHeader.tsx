@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/Wordmark";
-import { activeBrand } from "@/lib/brand";
+import { activeBrand, isPlaceholderPhone } from "@/lib/brand";
 import { solutionCategories } from "@/lib/products";
 
 /**
@@ -49,12 +49,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <a
-            href={`tel:${activeBrand.contact.phone.replace(/[^0-9+]/g, "")}`}
-            className="hidden font-mono text-xs text-ink-muted hover:text-ink sm:inline"
-          >
-            {activeBrand.contact.phone}
-          </a>
+          {!isPlaceholderPhone() && (
+            <a
+              href={`tel:${activeBrand.contact.phone.replace(/[^0-9+]/g, "")}`}
+              className="hidden font-mono text-xs text-ink-muted hover:text-ink sm:inline"
+            >
+              {activeBrand.contact.phone}
+            </a>
+          )}
           <Link
             href="/contact/request-quote"
             className="border border-accent bg-accent px-4 py-2 font-mono text-xs uppercase tracking-wide text-accent-ink no-underline hover:opacity-90"
