@@ -296,6 +296,16 @@ Phase 2: portfolio. Filterable project gallery (by product line, building type, 
 Phase 3: installation & operation videos. Hosted/embedded video library per line; agents can cite/link relevant videos.
 Phase 4 (optional): authenticated dealer/GC portal, deeper configurators (Euro-Wall/louver product selectors), project-status tracking.
 
+6.4 Imagery & video sourcing (planning)
+
+Sourcing risk splits by source; ranked cheapest-and-safest first.
+
+- Own installation photography — the primary source and the real differentiator. Zero legal risk, uniquely ours, and the strongest proof of the dealer-installer story. The content files already reserve host slots for "regional [line] installations." Budget for it; treat it as the hero imagery, not an afterthought.
+- Licensed dealer/manufacturer assets — as an authorized dealer-installer we can request brand-asset portals / media kits from each manufacturer (approved photography, logos, usage guidelines). This is the legitimate channel for product photography; the manufacturers want dealers using their approved imagery. A few emails to reps, not a scraper.
+- Do NOT scrape-and-rehost manufacturer photography — it is copyrighted work and usually violates ToS/robots.txt. Hotlinking (referencing their URL without copying) dodges the storage question but is fragile (they can break/block it), hurts LCP, and is still a rights gray area — avoid.
+- Video: YouTube embedding is explicitly sanctioned (the embed player), so manufacturer product-demo videos are low-risk to surface — but this brushes the Phase 3 `/videos` boundary. Distinguish an inline product-demo embed on a product page from the video-gallery route; confirm intent before adding video anywhere. When we do: use a lite-embed / click-to-load facade + `youtube-nocookie.com` so a ~1MB iframe + cookies don't wreck the Core Web Vitals the "specifier test" aesthetic depends on.
+- Design-system fit (the sleeper constraint): manufacturer marketing shots are often glossy/gradient-heavy and fight the warm-bone / hairline / no-shadow / no-gradient system. Whatever lands wants a consistent treatment (hairline framing, muted/duotone pass where needed, `next/image` for sizing + CLS control) so five brands' imagery reads as one system. Descriptive alt text on all project imagery (SEO, 7.2).
+
 
 
 PART 7 — SEO & DISCOVERABILITY

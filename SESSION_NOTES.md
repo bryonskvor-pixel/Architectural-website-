@@ -1,5 +1,38 @@
 # Session Notes
 
+## 2026-07-09 — Session 7: Brand finalized (IAS) + all marketing pages authored
+
+**Accomplished — the brand is real and every marketing scaffold is now authored content. Pushed to origin/main (deploys to prod).** Two parts, committed in logical groups.
+
+**Part 1 — Brand finalized: Integrated Architectural Solutions (IAS)** (commit `6c80044`)
+- **Name lives ONLY in [lib/brand.ts](lib/brand.ts)** (CLAUDE.md rule #1): `activeBrand.name = "Integrated Architectural Solutions"`, new **`mark: "IAS"`** field, `legalName` set. Palette accent retuned from the placeholder safety-orange to the **logo's steel-teal `#2A6E88`** (accentInk white), applied as `{ ...palettes.bone, accent, accentInk }` so the bone canvas stays and only the accent changes. Also updated the globals.css `:root` fallback accent to match (avoids an orange SSR flash).
+- **Logo:** real raster dropped at `public/brand/logo.jpg` (the full lockup w/ concrete background); the placeholder `logo.svg` was replaced with a background-free faceted **IAS** monogram (teal facets). Source file was `~/Downloads/IAS logo.JPG`.
+- **`<Wordmark/>`** gained `variant="full" | "mark"`. Header renders the **IAS** mark + full name (full shows lg+ only, since the full name is long); footer/pages render the full name.
+- **Every `[COMPANY]` literal replaced** in all five `lib/content/*.ts` (via `import { activeBrand }` + `${activeBrand.name}` template literals), plus `SiteFooter`, `RfqForm`, `README.md`, `package.json`. Verified in prerendered HTML: real name on home + product pages + sell-only Airolite, **zero `[COMPANY]` in output**. Code comments describing the placeholder *convention* were left where they document intent.
+
+**Part 2 — 16 marketing pages authored** (5 commits: `f87f2aa` process, `b56cf71` resources, `d023637` solutions, `8fd98db` about, `caf61b2` contact)
+- **New shared primitives: [components/Marketing.tsx](components/Marketing.tsx)** — `PageHero, Section, Prose, CardGrid/Card, NumberedSteps, Checklist, DataTable, Callout, FaqList, ButtonLink, CtaBand`. Built in the Skyfold visual contract (bone canvas, editorial serif + mono, hairline borders, hairline-grid layering, no shadows/gradients). All server components. **Reuse these for any new page** rather than re-deriving JSX.
+- **Process ×4** (led first, per request — the dealer-installer differentiator): `/process` full bid→preconstruction→field-measure→install→service pipeline + "no finger-pointing" thesis + sell-only carve-out; `/design-assist` (architect track, agents, AIA CEU); `/preconstruction-install` (GC track + the "what the GC provides" checklist); `/service` (in-house, all brands, Phase 1.5 flagged).
+- **Resources ×6:** hub ("linked, not mirrored"); `spec-library` + `cad-bim` (per-line, driven off `productLines`, link to manufacturer/ARCAT roots); `lead-times` (**real Airolite Qwik-Ship 1/3/5/10/20-day tiers**; honest quote-confirmed framing for the custom lines — **no fabricated week counts**); `aia-ceu`; `faq` (8 seeded Q&As + **FAQPage JSON-LD**).
+- **Solutions ×2:** hub (problem-framed) + `[category]` (at-a-glance `SpecBand` per line + per-category selection guidance). The `[category]/[brand]` product template was already done (Session 2–4).
+- **About ×2:** `/about` (why-we-exist + four commitments + the **full logo lockup** as a banner) + `/service-area` (one substantive page across Cleveland/Columbus/Akron-Canton/Toledo — deliberately **not** thin per-metro doorway pages; metro galleries deferred to Phase 2).
+- **Contact ×2:** `/contact` (two paths + phone/email + agent-escalation note) + `/book-lunch-and-learn` (routes through the **existing** `/api/rfq` intake tagged `source=lunch-and-learn` — no throwaway form; dedicated calendar is Phase 1.5). `/contact/request-quote` (the live RfqForm) untouched.
+- `isSellOnly()` gating held throughout; **`/portfolio` + `/videos` untouched as Phase 2/3 stubs** (still the only two `PageScaffold` pages).
+
+**Also:** added **§6.4 "Imagery & video sourcing (planning)"** to [Docs/Master_Website_Plan.md](Docs/Master_Website_Plan.md) — own install photos > licensed dealer/manufacturer media kits > (avoid hotlinking) > never scrape-and-rehost (copyright); YouTube embeds are sanctioned but brush the Phase-3 `/videos` boundary (use lite-embed + nocookie); manufacturer marketing imagery needs a consistent treatment to fit the no-shadow/no-gradient system.
+
+**Validation:** `typecheck` clean; full `build` green — **32 routes prerender**. Verified new pages render (process hero, FAQ JSON-LD, Qwik-Ship table, About logo img, category guidance) and no `[COMPANY]` in built HTML. **Pushed `d1fadd7..caf61b2` to origin/main → Vercel prod deploy triggered.**
+
+**STILL PENDING (carry-over, flagged to user):**
+1. **Real contact info** — `activeBrand.contact` is still placeholder `(000) 000-0000` / `hello@[company].com`, now rendering live on `/contact` + footer. One-line fix in `brand.ts` once the real phone + domain exist. (Domain also unblocks the RFQ email/CRM notifier + Cloudflare Email Routing — see Session 5.)
+2. **Palette accent decision** — I chose the logo teal `#2A6E88` over the old orange for cohesion. If the user prefers a contrasting accent, it's one value in `brand.ts`.
+3. **Browser smoke-test of a live agent answer** — still the last unverified launch piece (Turnstile blocks curl). Solve Turnstile, ask a Skyfold STC question, confirm streamed answer + `[n]` citation chips.
+4. **Session 5 leftovers (unchanged):** email/CRM notifier off `rfq_submissions` once a domain lands; spend/lead dashboard over `agent_events` + `rfq_submissions`; make prompt caching actually engage; verify header/footer "Request a Quote" CTA (it points at `/contact/request-quote`).
+
+**Gotchas (unchanged):** Windows build is memory-fragile — use `NODE_OPTIONS=--max-old-space-size=2048` and call `& "C:\Program Files\nodejs\npm.cmd"` directly (PS npm wrapper errors; in Git Bash use `"/c/Program Files/nodejs/npm.cmd"`). D1 param store id `18812c7c-0661-4e87-beaa-926b18f13a67` (table `parameters`: `model_id, brand, parameter_name, value, unit, source_doc, last_verified` — note it's `parameter_name`, not `param_name`).
+
+---
+
 ## 2026-07-08 — Session 6: Production launch verified live (deploy hardening, pt. 2)
 
 **Accomplished — the site is deployed, public, and the data tier is confirmed working in production.** This was a deployment/ops session, not content.
