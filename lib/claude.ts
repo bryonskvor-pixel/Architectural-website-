@@ -104,6 +104,19 @@ export async function* streamAgentTurn(args: {
       {
         type: "text",
         text: systemPrompt,
+        // Prompt caching is wired but does NOT engage today: Haiku 4.5's minimum
+        // cacheable prefix is 4096 tokens (verified — see the claude-api prompt-
+        // caching reference), and the per-brand system prompt is well under that,
+        // so this cache_control silently no-ops (cached_input_tokens reads 0 in
+        // agent_events; confirm with `npm run insights`). It's harmless and will
+        // engage automatically if the prompt grows past 4096 tokens. Do NOT pad
+        // the prompt just to cross the threshold — at pilot volume that raises
+        // cost (every first message pays 4096 tokens + the 1.25x write premium,
+        // and sporadic public traffic rarely sends a 2nd same-brand turn within
+        // the 5-min TTL to earn the read-back). The worthwhile path, when volume
+        // justifies it, is to fold the brand's stable D1 spec-parameter table
+        // into this prefix as real context — that exceeds 4096 tokens with
+        // useful, grounding content rather than filler.
         cache_control: { type: "ephemeral" },
       },
     ],
