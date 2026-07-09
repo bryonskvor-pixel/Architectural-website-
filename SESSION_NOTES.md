@@ -1,5 +1,40 @@
 # Session Notes
 
+## 2026-07-09 — Session 8: Launch verification complete + real-data gaps closed
+
+**The last unverified launch piece is now proven, and the biggest real-data gaps are wired. All work pushed `b7ba7b1..823bd96` → Vercel prod and verified live.** This session was verification + closing gaps, not new pages.
+
+**Priority 1 — a live agent is VERIFIED end-to-end (was the last open launch item).** The user ran the browser smoke test; the whole happy path is proven: Turnstile gate → retrieval → Claude stream → inline `[n]` citation chips resolving to real source docs → correct answer (the reconciled "support steel by others, to Skyfold's deflection criteria" nuance, with the right ±1/2 in / ±1/8 in tolerances) → logged to the web-agent D1. **First real browser-originated (Turnstile-passed) event: `agent_events` id 10, brand skyfold, in/out 3077/252 tok, $0.004337, refused=0, escalated=0.** Backend logging was independently confirmed healthy (all events carry real tokens/cost/flags).
+
+**Agent STC fix (surfaced BY the smoke test, commit `ac61511`).** Asked *"What system STC can Classic reach?"* (family, no model number), the Skyfold agent wrongly answered that the sources don't include an STC rating. Root-caused with evidence: **not a data or retrieval bug** — the param store has all four Classic STC values (Classic 51/55/60/NRC → 51/55/60/50; panel STC up to 66 on Classic 60), the Classic doc is only 38 lines with STC rows at positions 8–22 (inside the 40-line `buildSources` cap), so the numbers *did* reach the model. It was answer behavior: the system prompt covered "name the model" and "if unsupported, say so" but not the middle case — a **family** named without a specific model. Added guidance in [lib/agents/config.ts](lib/agents/config.ts) to enumerate each model's figure with its citation and ask which model, instead of claiming absence. **STILL NEEDS a browser re-test to confirm live** (now deployed).
+
+**Priority 3 — lead/spend visibility: `npm run insights`** ([scripts/insights.mjs](scripts/insights.mjs), commit `0a92248`). Read-only ops view over the web-agent D1 (`e0188046…`): spend total/per-brand/per-day, **today's spend vs the same UTC-midnight $25 circuit-breaker window the guardrail enforces**, token usage + cache-hit ratio, refusal/escalation rates, RFQ leads, and **question mining that surfaces refused/escalated questions first as FAQ/spec-library gaps** (the agent-as-content loop). Flags: `--days=N`, `--questions=N`, `--json`. Deliberately a local script, not a page (spend/lead data must not sit on the public site without auth). Reads `CLOUDFLARE_API_TOKEN` from `.env.local`; account id + web-agent DB id default to the shared non-secret values.
+
+**Priority 4 — caching + CTA.** (4b) Header + footer "Request a Quote" already point at `/contact/request-quote` — verified, no change. (4a) Prompt caching root-caused with the claude-api reference: **Haiku 4.5's minimum cacheable prefix is 4096 tokens**, and the per-brand system prompt is well under it, so `cache_control` silently no-ops (`cached_input_tokens` reads 0 on every event). **Documented at [lib/claude.ts](lib/claude.ts) (commit `8353011`); deliberately NOT force-fixed** — padding the prompt to 4096 tokens is net-negative at pilot volume (every first message pays 4096 tok + the 1.25× write premium, and sporadic traffic rarely earns the read-back within the 5-min TTL). The worthwhile path, when volume justifies it, is folding the brand's stable D1 spec-parameter table into the cached prefix as real grounding content.
+
+**Priority 2 — real contact info (partial).** User provided the **real office address** (16306 Detroit Avenue, Unit 120, Lakewood, OH 44107). Wired into `activeBrand.contact.address` in [lib/brand.ts](lib/brand.ts) (the single identity source), rendered on `/contact` (Office tile) and in the footer (`<address>`) via a new `addressLines()` helper. **Still no phone or domain** — added `isPlaceholderPhone()` / `isPlaceholderEmail()` guards so the header/footer/contact render phone+email only once real; the live site no longer shows `(000) 000-0000` or `hello@[company].com`. They light up automatically when brand.ts gets real values (commits `42f71de`, `823bd96`).
+
+**Also this session (user-requested):**
+- **Team section scaffold** ([lib/content/team.ts](lib/content/team.ts) + `TeamGrid` in [components/Marketing.tsx](components/Marketing.tsx), commit `1b507fe`). Empty-safe: the "The team" section on `/about` renders only when the array is non-empty, so nothing placeholder shows. Recommended `/about` (canonical About content) over the Process page; a "people behind the process" teaser on `/process` linking here is to be added **once populated**. Filling `team` (name/role required; photo in `public/team/`, bio, meta optional) is the only step to publish.
+- **About discoverability fix** (commit `823bd96`). `/about` was authored but linked from **neither** the header nav nor the footer — reachable only by URL (this is how the user found it missing). Added About to the header nav (after Process) and an `About · Process · Contact` company row to the footer's first column (all three were missing there).
+
+**Validation:** `typecheck` clean throughout. Pushed `b7ba7b1..823bd96` (6 commits) → Vercel prod; **verified live via prod fetch** — About in header nav, full Lakewood address in footer, zero `(000) 000-0000` on the page.
+
+**STILL PENDING (Session 9 docket):**
+1. **Re-run the Skyfold STC browser test** to confirm the family-enumeration fix live (should enumerate Classic 51/55/60/NRC with citations + ask which model, not decline). Re-query `agent_events` after.
+2. **Real phone + domain** (only remaining Priority 2 item) — nothing to invent; the phone/email guards auto-light when set in brand.ts. **The domain is the hard dependency for the RFQ email/CRM notifier + Cloudflare Email Routing** (free, in-budget).
+3. **Team content** — when names/roles/photos arrive, fill `lib/content/team.ts` (one-file drop) and add the Process→About teaser.
+4. **FAQ authoring from mined gaps** (`npm run insights`): the Classic-STC family question, "modernfold vs skyfold", "what is the lead time" — feed into `/resources/faq` (already has FAQPage JSON-LD). The agent-as-content loop paying off.
+5. **Backlog (unchanged):** prompt-caching real fix (fold D1 spec table into the cached prefix, gated on volume + sign-off); dedicated Anthropic key + scoped Cloudflare token; Phase 1.5 (AIA-CEU booking calendar, hosted checklists, service-page depth); imagery/video sourcing per Master Plan §6.4. **Do NOT build /portfolio or /videos.**
+
+**Gotchas / context for a fresh agent:**
+- **All company identity + contact lives ONLY in [lib/brand.ts](lib/brand.ts).** Phone/email are hidden site-wide while they hold their placeholder sentinels (`(000)…` / `[company]`); set real values there and they render everywhere. Address renders when `contact.address` is present; `addressLines()` handles a missing ZIP gracefully.
+- **Prod deploy = `git push`** (GitHub `bryonskvor-pixel/Architectural-website-` main → Vercel). Prod URL: `architectural-website-bryonskvor-3733s-projects.vercel.app`.
+- **web-agent D1** = `e0188046-2ac2-4485-a6d7-fdb35d38d969` (`agent_events`, `agent_sessions`, `rfq_submissions`). Param store = `18812c7c-0661-4e87-beaa-926b18f13a67` (table `parameters`: `model_id, parameter_name, value, unit, source_doc`). Query either via `npm run insights` (agent D1) or the Cloudflare MCP `d1_database_query`.
+- **Windows build is memory-fragile:** `NODE_OPTIONS=--max-old-space-size=2048` and call `"/c/Program Files/nodejs/npm.cmd"` directly (PS npm wrapper errors). `typecheck` is much lighter than `build` — prefer it for verification.
+
+---
+
 ## 2026-07-09 — Session 7: Brand finalized (IAS) + all marketing pages authored
 
 **Accomplished — the brand is real and every marketing scaffold is now authored content. Pushed to origin/main (deploys to prod).** Two parts, committed in logical groups.
