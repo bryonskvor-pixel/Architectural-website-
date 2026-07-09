@@ -120,7 +120,7 @@ export const activeBrand: Brand = {
       line1: "16306 Detroit Avenue, Unit 120",
       city: "Lakewood",
       state: "OH",
-      // zip: "44107", // TODO: confirm ZIP, then uncomment to publish full address
+      zip: "44107",
     },
   },
 };

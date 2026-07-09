@@ -46,6 +46,12 @@ export function SiteHeader() {
           >
             Process
           </Link>
+          <Link
+            href="/about"
+            className="font-mono text-xs uppercase tracking-wide text-ink-muted hover:text-ink"
+          >
+            About
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">

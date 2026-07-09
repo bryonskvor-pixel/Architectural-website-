@@ -43,6 +43,21 @@ export function SiteFooter() {
               </a>
             )}
           </address>
+
+          <nav
+            aria-label="Company"
+            className="mt-4 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs"
+          >
+            <Link href="/about" className="text-ink hover:text-accent">
+              About
+            </Link>
+            <Link href="/process" className="text-ink hover:text-accent">
+              Process
+            </Link>
+            <Link href="/contact" className="text-ink hover:text-accent">
+              Contact
+            </Link>
+          </nav>
         </div>
 
         <FooterCol title="Solutions">
