@@ -242,6 +242,27 @@ body {
   }
 }
 
+/* Terminal caret blink (home agent band) — opacity only; under reduced
+   motion the override leaves a static visible caret. */
+@keyframes caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.caret-blink {
+  margin-left: 2px;
+  color: var(--color-accent);
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+
 /* FAQ answers rise in when a <details> opens. */
 @keyframes fade-rise {
   from {

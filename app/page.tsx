@@ -77,25 +77,34 @@ export default function HomePage() {
       {/* Solutions by problem category — plan Part 2 */}
       <section className="mx-auto max-w-6xl px-6 py-8">
         <Reveal>
-          <h2 className="mb-8 font-mono text-xs uppercase tracking-wide text-ink-muted">
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
             Solutions by problem
+          </p>
+          <h2 className="mt-2 max-w-2xl font-serif text-3xl leading-tight text-ink md:text-4xl">
+            What is your project trying to solve?
           </h2>
+          <p className="mt-3 max-w-2xl text-ink-muted">
+            Start with the problem — we&apos;ll match the system. Five product
+            lines across four problem sets.
+          </p>
         </Reveal>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
           {solutionCategories.map((cat, i) => (
             <Reveal key={cat.slug} delay={i * 80} className="h-full">
               <Link
                 href={`/solutions/${cat.slug}`}
-                className="card-sweep group block h-full border border-hairline p-8 no-underline transition-colors hover:border-accent"
+                className="card-sweep group flex h-full flex-col border border-hairline p-8 no-underline transition-colors hover:border-accent hover:bg-surface"
               >
-                <h3 className="font-serif text-2xl text-ink">
+                <p className="font-mono text-[11px] uppercase tracking-wide text-accent">
+                  {String(i + 1).padStart(2, "0")}
+                </p>
+                <h3 className="mt-2 font-serif text-3xl leading-tight text-ink">
                   {cat.title}
-                  <span className="ml-1.5 inline-block text-accent opacity-0 transition-[opacity,transform] duration-300 group-hover:translate-x-0.5 group-hover:opacity-100">
-                    ↗
-                  </span>
                 </h3>
-                <p className="mt-2 text-ink-muted">{cat.blurb}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
+                <p className="mt-3 text-lg leading-relaxed text-ink-muted">
+                  {cat.blurb}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2">
                   {cat.lines.map((slug) => {
                     const line = productLines[slug];
                     return (
@@ -110,6 +119,12 @@ export default function HomePage() {
                     );
                   })}
                 </div>
+                <p className="mt-auto pt-6 font-mono text-xs uppercase tracking-wide text-accent">
+                  Explore {cat.title}
+                  <span className="ml-1.5 inline-block transition-transform duration-300 group-hover:translate-x-1">
+                    →
+                  </span>
+                </p>
               </Link>
             </Reveal>
           ))}
@@ -121,27 +136,37 @@ export default function HomePage() {
         <Reveal>
           <div className="border border-hairline bg-surface p-10">
             <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
-              The differentiator
+              Ask, don&apos;t dig
             </p>
-            <h2 className="mt-4 max-w-3xl font-serif text-3xl text-ink">
-              Five per-line catalog agents. Interrogate real manufacturer spec
-              data — with citations.
+            <h2 className="mt-4 max-w-3xl font-serif text-3xl leading-tight text-ink md:text-4xl">
+              Talk to our AI experts — one for every product we carry.
             </h2>
-            <p className="mt-4 max-w-2xl text-ink-muted">
-              Each product line has an on-page technical agent scoped to that
-              brand&apos;s documents. Ask about ratings, sizes, structural
-              requirements, and lead times; every answer cites its source.
+            <p className="mt-4 max-w-2xl text-lg text-ink-muted">
+              Every product page has a built-in expert trained on that
+              manufacturer&apos;s real documents. Ask in plain English about
+              sizes, ratings, structural requirements, or lead times — and
+              every answer cites the exact source document, so you can verify
+              it yourself.
+            </p>
+            {/* A real question the Skyfold agent answers well — typed at a
+                terminal prompt, so the band reads as interactive. */}
+            <p className="mt-6 font-mono text-sm text-ink">
+              <span className="text-accent">›</span>{" "}
+              &ldquo;What system STC can Skyfold Classic reach?&rdquo;
+              <span className="caret-blink" aria-hidden>
+                ▌
+              </span>
             </p>
             <div className="mt-6 flex flex-wrap gap-2">
               {Object.values(productLines).map((line) => (
                 <Link
                   key={line.slug}
                   href={`/solutions/${line.category}/${line.slug}`}
-                  className="inline-flex items-center gap-2 border border-hairline px-3 py-1.5 font-mono text-[11px] text-ink no-underline transition-[border-color,transform] duration-200 hover:-translate-y-px hover:border-accent"
+                  className="inline-flex items-center gap-2 border border-accent px-3.5 py-2 font-mono text-xs text-accent no-underline transition-[background-color,color,transform] duration-200 hover:-translate-y-px hover:bg-accent hover:text-accent-ink"
                 >
-                  Ask the {line.name} Agent
+                  Ask the {line.name} expert
                   {line.fulfillment === "sell-only" && (
-                    <span className="text-ink-muted">(supply only)</span>
+                    <span className="opacity-70">(supply only)</span>
                   )}
                 </Link>
               ))}
