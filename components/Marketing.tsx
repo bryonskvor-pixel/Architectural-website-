@@ -1,12 +1,16 @@
 import Link from "next/link";
+import { Children } from "react";
+import { Reveal } from "@/components/motion/Reveal";
 
 /**
  * Marketing section primitives — the shared vocabulary for the content pages
  * (process, resources, solutions, about, contact), in the plan's Part 5 design
  * language: warm bone canvas, editorial serif headings, monospace labels/spec
  * data, hairline 1px borders, depth via grid layering only. No shadows, no
- * gradients. Server components — no interactivity (the agent + RFQ form are the
- * only client islands). Mirrors the idioms proven on the Skyfold product page
+ * gradients. Server components — the only client leaf is the tiny Reveal
+ * scroll-motion wrapper (children stay server-rendered), so the agent + RFQ
+ * form remain the only interactive islands. Mirrors the idioms proven on the
+ * Skyfold product page
  * and the home page so every page reads as one system.
  */
 
@@ -58,21 +62,38 @@ export function PageHero({
   return (
     <header className="border-b border-hairline">
       <Container className="py-16 md:py-20">
-        {crumbs && crumbs.length > 0 && <Breadcrumbs crumbs={crumbs} />}
+        {crumbs && crumbs.length > 0 && (
+          <div className="rise-in">
+            <Breadcrumbs crumbs={crumbs} />
+          </div>
+        )}
         {eyebrow && (
-          <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
+          <p className="rise-in font-mono text-xs uppercase tracking-wide text-ink-muted">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-3 max-w-3xl font-serif text-4xl leading-[1.1] text-ink md:text-5xl">
+        <h1
+          className="rise-in mt-3 max-w-3xl font-serif text-4xl leading-[1.1] text-ink md:text-5xl"
+          style={{ "--rise-delay": "90ms" } as React.CSSProperties}
+        >
           {title}
         </h1>
         {lead && (
-          <p className="mt-6 max-w-2xl text-xl leading-relaxed text-ink-muted">
+          <p
+            className="rise-in mt-6 max-w-2xl text-xl leading-relaxed text-ink-muted"
+            style={{ "--rise-delay": "180ms" } as React.CSSProperties}
+          >
             {lead}
           </p>
         )}
-        {children && <div className="mt-9">{children}</div>}
+        {children && (
+          <div
+            className="rise-in mt-9"
+            style={{ "--rise-delay": "270ms" } as React.CSSProperties}
+          >
+            {children}
+          </div>
+        )}
       </Container>
     </header>
   );
@@ -96,17 +117,26 @@ export function Section({
   return (
     <section id={id} className={`scroll-mt-24 border-t border-hairline ${className}`}>
       <Container className="py-16">
-        {eyebrow && (
-          <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
-            {eyebrow}
-          </p>
+        {(eyebrow || title) && (
+          <Reveal>
+            {eyebrow && (
+              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
+                {eyebrow}
+              </p>
+            )}
+            {title && (
+              <h2 className="mt-2 max-w-3xl font-serif text-3xl leading-tight text-ink">
+                {title}
+              </h2>
+            )}
+          </Reveal>
         )}
-        {title && (
-          <h2 className="mt-2 max-w-3xl font-serif text-3xl leading-tight text-ink">
-            {title}
-          </h2>
-        )}
-        <div className={eyebrow || title ? "mt-8" : ""}>{children}</div>
+        <Reveal
+          delay={eyebrow || title ? 100 : 0}
+          className={eyebrow || title ? "mt-8" : ""}
+        >
+          {children}
+        </Reveal>
       </Container>
     </section>
   );
@@ -135,7 +165,11 @@ export function CardGrid({
         cols === 3 ? "md:grid-cols-3" : "md:grid-cols-2"
       }`}
     >
-      {children}
+      {Children.map(children, (child, i) => (
+        <Reveal delay={Math.min(i, 5) * 70} className="h-full">
+          {child}
+        </Reveal>
+      ))}
     </div>
   );
 }
@@ -160,7 +194,11 @@ export function Card({
       )}
       <h3 className={`font-serif text-2xl text-ink ${kicker ? "mt-2" : ""}`}>
         {title}
-        {href && <span className="ml-1.5 text-accent">↗</span>}
+        {href && (
+          <span className="ml-1.5 inline-block text-accent transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+            ↗
+          </span>
+        )}
       </h3>
       {children && <div className="mt-3 text-ink-muted">{children}</div>}
     </>
@@ -169,13 +207,13 @@ export function Card({
     return (
       <Link
         href={href}
-        className="group block bg-canvas p-8 no-underline transition-colors hover:bg-surface"
+        className="card-sweep group block h-full bg-canvas p-8 no-underline transition-colors hover:bg-surface"
       >
         {inner}
       </Link>
     );
   }
-  return <div className="bg-canvas p-8">{inner}</div>;
+  return <div className="h-full bg-canvas p-8">{inner}</div>;
 }
 
 /** Team roster grid — optional square photo + name + role + optional meta/bio. */
@@ -192,8 +230,8 @@ export function TeamGrid({
 }) {
   return (
     <div className="grid gap-px border border-hairline bg-hairline sm:grid-cols-2 lg:grid-cols-3">
-      {members.map((m) => (
-        <div key={m.name} className="bg-canvas p-6">
+      {members.map((m, i) => (
+        <Reveal key={m.name} delay={Math.min(i, 5) * 60} className="h-full bg-canvas p-6">
           {m.photo && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -214,7 +252,7 @@ export function TeamGrid({
           {m.bio && (
             <p className="mt-3 text-sm leading-relaxed text-ink-muted">{m.bio}</p>
           )}
-        </div>
+        </Reveal>
       ))}
     </div>
   );
@@ -229,7 +267,7 @@ export function NumberedSteps({
   return (
     <ol className="divide-y divide-hairline border-y border-hairline">
       {steps.map((s, i) => (
-        <li key={i} className="flex gap-6 py-6">
+        <Reveal as="li" key={i} delay={Math.min(i, 6) * 60} className="flex gap-6 py-6">
           <span className="mt-1 shrink-0 font-mono text-sm text-accent">
             {String(i + 1).padStart(2, "0")}
           </span>
@@ -244,7 +282,7 @@ export function NumberedSteps({
               </p>
             )}
           </div>
-        </li>
+        </Reveal>
       ))}
     </ol>
   );
@@ -279,7 +317,7 @@ export function Checklist({
   return (
     <ul className="divide-y divide-hairline border-y border-hairline">
       {items.map((it, i) => (
-        <li key={i} className="flex gap-4 py-4">
+        <Reveal as="li" key={i} delay={Math.min(i, 8) * 40} className="flex gap-4 py-4">
           <span className="mt-0.5 font-mono text-xs text-accent">☐</span>
           <div>
             <p className="text-ink">{it.label}</p>
@@ -287,7 +325,7 @@ export function Checklist({
               <p className="mt-1 text-sm text-ink-muted">{it.detail}</p>
             )}
           </div>
-        </li>
+        </Reveal>
       ))}
     </ul>
   );
@@ -356,11 +394,11 @@ export function FaqList({
         <details key={i} className="group py-4">
           <summary className="flex cursor-pointer items-center justify-between gap-4 font-serif text-lg text-ink marker:content-['']">
             {it.q}
-            <span className="font-mono text-accent transition-transform group-open:rotate-45">
+            <span className="font-mono text-accent transition-transform duration-300 group-open:rotate-45">
               +
             </span>
           </summary>
-          <div className="mt-3 max-w-2xl leading-relaxed text-ink-muted [&_a]:text-accent [&_a:hover]:underline">
+          <div className="faq-answer mt-3 max-w-2xl leading-relaxed text-ink-muted [&_a]:text-accent [&_a:hover]:underline">
             {it.a}
           </div>
         </details>
@@ -380,7 +418,7 @@ export function ButtonLink({
   variant?: "primary" | "outline";
 }) {
   const base =
-    "inline-block px-5 py-2.5 font-mono text-xs uppercase tracking-wide no-underline";
+    "inline-block px-5 py-2.5 font-mono text-xs uppercase tracking-wide no-underline transition-[opacity,transform,border-color] duration-200 hover:-translate-y-px";
   const styles =
     variant === "primary"
       ? "border border-accent bg-accent text-accent-ink hover:opacity-90"
@@ -420,18 +458,20 @@ export function CtaBand({
   return (
     <section className="border-t border-hairline bg-surface">
       <Container className="py-16">
-        <h2 className="max-w-3xl font-serif text-3xl leading-tight text-ink">
-          {title}
-        </h2>
-        {body && <p className="mt-3 max-w-2xl text-ink-muted">{body}</p>}
-        <div className="mt-6 flex flex-wrap gap-3">
+        <Reveal>
+          <h2 className="max-w-3xl font-serif text-3xl leading-tight text-ink">
+            {title}
+          </h2>
+          {body && <p className="mt-3 max-w-2xl text-ink-muted">{body}</p>}
+        </Reveal>
+        <Reveal delay={120} className="mt-6 flex flex-wrap gap-3">
           <ButtonLink href={primary.href}>{primary.label}</ButtonLink>
           {secondary && (
             <ButtonLink href={secondary.href} variant="outline">
               {secondary.label}
             </ButtonLink>
           )}
-        </div>
+        </Reveal>
       </Container>
     </section>
   );

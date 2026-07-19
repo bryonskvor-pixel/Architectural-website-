@@ -4,6 +4,7 @@ import { isSellOnly } from "@/lib/products";
 import { getLineContent } from "@/lib/content";
 import { isAgentEnabled } from "@/lib/agents/pilot";
 import { SectionCutHeader } from "@/components/SectionCutHeader";
+import { Reveal } from "@/components/motion/Reveal";
 import { AgentPanel } from "@/components/AgentPanel";
 import {
   Applications,
@@ -169,10 +170,12 @@ function Section({
 }) {
   return (
     <section id={id} className={`py-16 ${first ? "" : "border-t border-hairline"}`}>
-      <h2 className="mb-6 font-mono text-xs uppercase tracking-wide text-ink-muted">
-        {title}
-      </h2>
-      {children}
+      <Reveal>
+        <h2 className="mb-6 font-mono text-xs uppercase tracking-wide text-ink-muted">
+          {title}
+        </h2>
+      </Reveal>
+      <Reveal delay={80}>{children}</Reveal>
     </section>
   );
 }
@@ -196,14 +199,14 @@ function CtaRow({
     <div className="mt-5 flex flex-wrap gap-3">
       <Link
         href={primaryHref}
-        className="border border-accent bg-accent px-5 py-2.5 font-mono text-xs uppercase tracking-wide text-accent-ink no-underline hover:opacity-90"
+        className="border border-accent bg-accent px-5 py-2.5 font-mono text-xs uppercase tracking-wide text-accent-ink no-underline transition-[opacity,transform] duration-200 hover:-translate-y-px hover:opacity-90"
       >
         {primaryLabel}
       </Link>
       {secondaryHref && secondaryLabel && (
         <Link
           href={secondaryHref}
-          className="border border-hairline px-5 py-2.5 font-mono text-xs uppercase tracking-wide text-ink no-underline hover:border-accent"
+          className="border border-hairline px-5 py-2.5 font-mono text-xs uppercase tracking-wide text-ink no-underline transition-[border-color,transform] duration-200 hover:-translate-y-px hover:border-accent"
         >
           {secondaryLabel}
         </Link>

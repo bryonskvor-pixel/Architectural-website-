@@ -3,6 +3,7 @@ import { Newsreader, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import { activeBrand, brandCssVars } from "@/lib/brand";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { ScrollProgress } from "@/components/motion/ScrollProgress";
 import "./globals.css";
 
 // Typography per plan Part 5.1. Editorial neo-serif headings + a premium sans
@@ -45,6 +46,7 @@ export default function RootLayout({
       style={{ cssText: brandCssVars() } as React.CSSProperties}
     >
       <body className="min-h-screen antialiased">
+        <ScrollProgress />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

@@ -64,15 +64,23 @@ export function SectionCutHeader({
   return (
     <section className="border-b border-hairline">
       <div className="mx-auto max-w-6xl px-6 py-20">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="rise-in flex flex-wrap items-center gap-3">
           <CsiChip csi={line.csi} />
           <FulfillmentBadge line={line} />
         </div>
 
-        <h1 className="mt-6 max-w-3xl font-serif text-5xl leading-[1.05] text-ink md:text-6xl">
+        <h1
+          className="rise-in mt-6 max-w-3xl font-serif text-5xl leading-[1.05] text-ink md:text-6xl"
+          style={{ "--rise-delay": "90ms" } as React.CSSProperties}
+        >
           {line.name}
         </h1>
-        <p className="mt-4 max-w-2xl text-xl text-ink-muted">{line.tagline}</p>
+        <p
+          className="rise-in mt-4 max-w-2xl text-xl text-ink-muted"
+          style={{ "--rise-delay": "180ms" } as React.CSSProperties}
+        >
+          {line.tagline}
+        </p>
 
         {/* Section-cut image slot with retract motion. Placeholder panels stand
             in for hero photography; the panels translate up + fade toward a
@@ -116,8 +124,12 @@ export function SectionCutHeader({
 
         {/* Monospace spec ticker — key ratings as a data strip (plan Part 5.2). */}
         <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-hairline pt-4">
-          {line.ataGlance.map((f) => (
-            <span key={f.label} className="font-mono text-xs text-ink-muted">
+          {line.ataGlance.map((f, i) => (
+            <span
+              key={f.label}
+              className="rise-in font-mono text-xs text-ink-muted"
+              style={{ "--rise-delay": `${300 + i * 70}ms` } as React.CSSProperties}
+            >
               {f.label}: <span className="text-ink">{f.value}</span>
             </span>
           ))}
