@@ -23,8 +23,10 @@ export default function HomePage() {
             className="rise-in mt-6 max-w-4xl font-serif text-5xl leading-[1.05] text-ink md:text-7xl"
             style={{ "--rise-delay": "90ms" } as React.CSSProperties}
           >
-            The technical resource for specifying, supplying, and installing
-            specialty walls, doors, and life-safety systems.
+            The technical resource for <EmCycle i={0}>specifying</EmCycle>,{" "}
+            <EmCycle i={1}>supplying</EmCycle>, and{" "}
+            <EmCycle i={2}>installing</EmCycle> specialty walls, doors, and
+            life-safety systems.
           </h1>
           <p
             className="rise-in mt-6 max-w-2xl text-xl text-ink-muted"
@@ -142,6 +144,19 @@ export default function HomePage() {
         </Reveal>
       </section>
     </>
+  );
+}
+
+/** One of the hero's three cycling-emphasis words; `i` sets its 2s slot in
+    the 6s underline cycle (styles: .em-cycle in globals.css). */
+function EmCycle({ i, children }: { i: number; children: React.ReactNode }) {
+  return (
+    <span
+      className="em-cycle"
+      style={{ "--em-delay": `${i * 2}s` } as React.CSSProperties}
+    >
+      {children}
+    </span>
   );
 }
 
