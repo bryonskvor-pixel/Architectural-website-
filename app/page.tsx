@@ -59,8 +59,14 @@ export default function HomePage() {
         <div className="grid gap-px border border-hairline bg-hairline md:grid-cols-2">
           {PILLARS.map((p, i) => (
             <Reveal key={p.title} delay={i * 70} className="h-full">
-              <div className="h-full bg-canvas p-8">
-                <h2 className="font-serif text-2xl text-ink">{p.title}</h2>
+              <div
+                className="pillar h-full bg-canvas p-8 transition-colors duration-300 hover:bg-surface"
+                style={{ "--pillar-delay": `${i * 180}ms` } as React.CSSProperties}
+              >
+                <p className="font-mono text-[11px] uppercase tracking-wide text-accent">
+                  {String(i + 1).padStart(2, "0")}
+                </p>
+                <h2 className="mt-2 font-serif text-2xl text-ink">{p.title}</h2>
                 <p className="mt-3 text-ink-muted">{p.body}</p>
               </div>
             </Reveal>
